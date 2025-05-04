@@ -6,12 +6,17 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { Product } from '@/payload-types'
 
-type Props = {
+interface ImageObject {
+  url: string
+  [key: string]: any
+}
+
+interface PageProps {
   params: Promise<{ id: string }>
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-export async function generateMetadata({ params, searchParams }: Props) {
+export async function generateMetadata({ params, searchParams }: PageProps) {
   const { id } = await params
   const payload = await getPayload({ config })
   let product: Product | null = null
@@ -21,7 +26,7 @@ export async function generateMetadata({ params, searchParams }: Props) {
       collection: 'products',
       id: id,
     })
-  } catch (error) {
+  } catch (_error) {
     return {
       title: 'Product Not Found',
       description: 'The requested product could not be found.',
@@ -41,7 +46,7 @@ export async function generateMetadata({ params, searchParams }: Props) {
   }
 }
 
-export default async function ProductPage({ params, searchParams }: Props) {
+export default async function ProductPage({ params, searchParams }: PageProps) {
   const { id } = await params
   const payload = await getPayload({ config })
   let product: Product | null = null
@@ -51,38 +56,12 @@ export default async function ProductPage({ params, searchParams }: Props) {
       collection: 'products',
       id,
     })
-  } catch (error) {
+  } catch (_error) {
     notFound()
   }
 
   if (!product) {
     notFound()
-  }
-
-  // Get related products from the same category
-  let relatedProducts: Product[] = []
-  try {
-    const relatedResult = await payload.find({
-      collection: 'products',
-      where: {
-        and: [
-          {
-            category: {
-              equals: typeof product.category === 'object' ? product.category.id : product.category,
-            },
-          },
-          {
-            id: {
-              not_equals: product.id,
-            },
-          },
-        ],
-      },
-      limit: 3,
-    })
-    relatedProducts = relatedResult.docs
-  } catch (error) {
-    console.error('Failed to fetch related products:', error)
   }
 
   return (
@@ -100,7 +79,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
                 <Image
                   src={
                     typeof product.images[0].image === 'object'
-                      ? (product.images[0].image as any).url || '/placeholder-image.jpg'
+                      ? (product.images[0].image as ImageObject).url || '/placeholder-image.jpg'
                       : '/placeholder-image.jpg'
                   }
                   alt={product.name || 'Product image'}
@@ -147,53 +126,6 @@ export default async function ProductPage({ params, searchParams }: Props) {
           </div>
         </div>
       </div>
-
-      {/* Related Products */}
-      {relatedProducts.length > 0 && (
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold mb-6">You may also like</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {relatedProducts.map((relatedProduct) => (
-              <div
-                key={relatedProduct.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
-              >
-                <div className="relative h-48">
-                  {relatedProduct.images && relatedProduct.images[0] && (
-                    <Image
-                      src={
-                        typeof relatedProduct.images[0].image === 'object'
-                          ? (relatedProduct.images[0].image as any).url || '/placeholder-image.jpg'
-                          : '/placeholder-image.jpg'
-                      }
-                      alt={relatedProduct.name || 'Product image'}
-                      fill
-                      style={{ objectFit: 'cover' }}
-                    />
-                  )}
-                </div>
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold mb-2">{relatedProduct.name}</h3>
-                  <div className="flex justify-between items-center">
-                    <span className="text-blue-600 font-bold">
-                      $
-                      {typeof relatedProduct.price === 'number'
-                        ? relatedProduct.price.toFixed(2)
-                        : '0.00'}
-                    </span>
-                    <Link
-                      href={`/products/${relatedProduct.id}`}
-                      className="text-sm bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded"
-                    >
-                      View Details
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
