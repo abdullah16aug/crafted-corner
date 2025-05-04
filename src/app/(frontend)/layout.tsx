@@ -1,9 +1,10 @@
 import React from 'react'
 import './styles.css'
+import Navbar from '@/components/Navbar'
 
 export const metadata = {
-  description: 'A blank template using Payload in a Next.js app.',
-  title: 'Payload Blank Template',
+  description: 'Crafted Corner - Handmade crafts and unique items',
+  title: 'Crafted Corner',
 }
 
 export default async function RootLayout(props: { children: React.ReactNode }) {
@@ -12,7 +13,8 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <main>{children}</main>
+        <Navbar />
+        <main className="min-h-screen">{children}</main>
       </body>
     </html>
   )
