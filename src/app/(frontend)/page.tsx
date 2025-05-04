@@ -1,36 +1,55 @@
-import { headers as getHeaders } from 'next/headers.js'
-import Image from 'next/image'
-import { getPayload } from 'payload'
 import React from 'react'
-import { fileURLToPath } from 'url'
-import Link from 'next/link'
-
+import { getPayload } from 'payload'
 import config from '@/payload.config'
-import './styles.css'
+import { Product } from '@/payload-types'
+import Link from 'next/link'
+import Image from 'next/image'
 
-export default async function HomePage() {
-  const headers = await getHeaders()
-  const payloadConfig = await config
-  const payload = await getPayload({ config: payloadConfig })
-  const { user } = await payload.auth({ headers })
-
-  const fileURL = `vscode://file/${fileURLToPath(import.meta.url)}`
+export default async function Home() {
+  const payload = await getPayload({ config })
+  const products = await payload.find({
+    collection: 'products',
+  })
 
   return (
-    <div className="pt-8 pb-16 flex flex-col items-center justify-center bg-gray-100 p-4">
-      <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8">
-        <h1 className="text-3xl font-bold text-center text-blue-600 mb-6">Crafted Corner</h1>
-        <p className="text-gray-600 text-center mb-8">
-          Welcome to your beautiful crafted corner website!
-        </p>
-        <div className="flex justify-center">
-          <Link
-            href="/admin"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-150"
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">Our Products</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {products.docs.map((product: Product) => (
+          <div
+            key={product.id}
+            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
           >
-            Go to Admin Panel
-          </Link>
-        </div>
+            <div className="relative h-48">
+              {product.images && product.images[0] && (
+                <Image
+                  src={
+                    typeof product.images[0].image === 'object'
+                      ? (product.images[0].image as any).url || '/placeholder-image.jpg'
+                      : '/placeholder-image.jpg'
+                  }
+                  alt={product.name || 'Product image'}
+                  fill
+                  style={{ objectFit: 'cover' }}
+                />
+              )}
+            </div>
+            <div className="p-4">
+              <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
+              <div className="flex justify-between items-center">
+                <span className="text-blue-600 font-bold">
+                  ${typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
+                </span>
+                <Link
+                  href={`/products/${product.id}`}
+                  className="text-sm bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded"
+                >
+                  View Details
+                </Link>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )

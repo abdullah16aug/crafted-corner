@@ -1,5 +1,4 @@
-import { CollectionConfig } from 'payload/types'
-
+import type { CollectionConfig } from 'payload'
 const Products: CollectionConfig = {
   slug: 'products',
   admin: {

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { Product, Media } from '../../../payload-types'
+import { Product, Media } from '@/payload-types'
 
 const payload = await getPayload({ config })
 export const metadata = {
@@ -50,12 +50,6 @@ export default function ProductsPage() {
                 <span className="text-blue-600 font-bold">
                   ${typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
                 </span>
-                <Link
-                  href={`/products/${product.id}`}
-                  className="text-sm bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded"
-                >
-                  View Details
-                </Link>
               </div>
             </div>
           </div>

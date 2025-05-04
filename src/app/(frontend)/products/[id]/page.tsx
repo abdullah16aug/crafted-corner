@@ -3,25 +3,32 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getPayload } from 'payload'
-import config from '@payload-config'
-import { Product, Media } from '../../../../payload-types'
+import config from '@/payload.config'
+import { Product } from '@/payload-types'
 
 type Props = {
-  params: {
-    id: string
-  }
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-export async function generateMetadata({ params }: Props) {
+export async function generateMetadata({ params, searchParams }: Props) {
+  const { id } = await params
   const payload = await getPayload({ config })
-  let product
+  let product: Product | null = null
 
   try {
     product = await payload.findByID({
       collection: 'products',
-      id: params.id,
+      id: id,
     })
   } catch (error) {
+    return {
+      title: 'Product Not Found',
+      description: 'The requested product could not be found.',
+    }
+  }
+
+  if (!product) {
     return {
       title: 'Product Not Found',
       description: 'The requested product could not be found.',
@@ -34,16 +41,21 @@ export async function generateMetadata({ params }: Props) {
   }
 }
 
-export default async function ProductPage({ params }: Props) {
+export default async function ProductPage({ params, searchParams }: Props) {
+  const { id } = await params
   const payload = await getPayload({ config })
-  let product
+  let product: Product | null = null
 
   try {
     product = await payload.findByID({
       collection: 'products',
-      id: params.id,
+      id,
     })
   } catch (error) {
+    notFound()
+  }
+
+  if (!product) {
     notFound()
   }
 
@@ -75,10 +87,7 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Link
-        href="/products"
-        className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-6"
-      >
+      <Link href="/" className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-6">
         ← Back to Products
       </Link>
 
@@ -91,7 +100,7 @@ export default async function ProductPage({ params }: Props) {
                 <Image
                   src={
                     typeof product.images[0].image === 'object'
-                      ? (product.images[0].image as Media).url || '/placeholder-image.jpg'
+                      ? (product.images[0].image as any).url || '/placeholder-image.jpg'
                       : '/placeholder-image.jpg'
                   }
                   alt={product.name || 'Product image'}
@@ -154,8 +163,7 @@ export default async function ProductPage({ params }: Props) {
                     <Image
                       src={
                         typeof relatedProduct.images[0].image === 'object'
-                          ? (relatedProduct.images[0].image as Media).url ||
-                            '/placeholder-image.jpg'
+                          ? (relatedProduct.images[0].image as any).url || '/placeholder-image.jpg'
                           : '/placeholder-image.jpg'
                       }
                       alt={relatedProduct.name || 'Product image'}
