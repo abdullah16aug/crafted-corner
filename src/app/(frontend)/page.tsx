@@ -1,24 +1,33 @@
 import React from 'react'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { Product, Category } from '@/payload-types'
+import { Product, Category, Media } from '@/payload-types'
 import Link from 'next/link'
 import Image from 'next/image'
+// Import the new client component for the grid
+import FeaturedProductsClient from '@/components/FeaturedProductsClient'
 
-export const revalidate = 60 // Revalidate every minute
+// Restore revalidate if desired, or leave for on-demand
+// export const revalidate = 60
 
+// Make page async again
 export default async function Home() {
   const payload = await getPayload({ config })
 
-  // Fetch products
-  const products = await payload.find({
-    collection: 'products',
-  })
-
-  // Fetch categories
-  const categories = await payload.find({
-    collection: 'categories',
-  })
+  // Fetch data server-side
+  let products: Product[] = []
+  let categories: Category[] = []
+  try {
+    const [productsData, categoriesData] = await Promise.all([
+      payload.find({ collection: 'products', limit: 4, depth: 1 }), // Fetch limited products, maybe add depth: 1 for image url
+      payload.find({ collection: 'categories', depth: 0 }),
+    ])
+    products = productsData.docs
+    categories = categoriesData.docs
+  } catch (error) {
+    console.error('Failed to fetch homepage data:', error)
+    // Handle error appropriately, maybe show fewer items or a message
+  }
 
   return (
     <div className="bg-stone-50 min-h-screen">
@@ -54,59 +63,8 @@ export default async function Home() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:gap-6">
-          {products.docs.slice(0, 4).map((product: Product) => (
-            <div
-              key={product.id}
-              className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300 group"
-            >
-              <div className="relative h-32 xs:h-40 sm:h-48 overflow-hidden">
-                {product.images && product.images[0] && (
-                  <Image
-                    src={
-                      typeof product.images[0].image === 'object'
-                        ? (product.images[0].image as any).url || '/placeholder-image.jpg'
-                        : '/placeholder-image.jpg'
-                    }
-                    alt={product.name || 'Product image'}
-                    fill
-                    style={{ objectFit: 'cover' }}
-                    className="group-hover:scale-105 transition-transform duration-300"
-                  />
-                )}
-              </div>
-              <div className="p-3 xs:p-4">
-                <h3 className="text-sm xs:text-base font-medium text-stone-800 mb-1">
-                  {product.name}
-                </h3>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-baseline gap-2">
-                    {product.discountedPrice != null && product.discountedPrice < product.price ? (
-                      <>
-                        <span className="text-amber-800 font-semibold text-xs xs:text-sm">
-                          ₹{product.discountedPrice.toFixed(2)}
-                        </span>
-                        <span className="text-stone-500 line-through text-xs">
-                          ₹{typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-amber-800 font-semibold text-xs xs:text-sm">
-                        ₹{typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
-                      </span>
-                    )}
-                  </div>
-                  <Link
-                    href={`/products/${product.id}`}
-                    className="text-xs bg-stone-100 hover:bg-stone-200 text-stone-800 py-1 px-2 xs:px-3 rounded-md transition-colors"
-                  >
-                    View Details
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* Render the client component for the grid */}
+        <FeaturedProductsClient products={products} />
       </div>
 
       {/* Categories section */}
@@ -116,7 +74,7 @@ export default async function Home() {
             Shop by Category
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {categories.docs.map((category: Category) => (
+            {categories.map((category: Category) => (
               <Link
                 key={category.id}
                 href={`/products?category=${category.id}`}

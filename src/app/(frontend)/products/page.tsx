@@ -8,7 +8,7 @@ import { Media, Category } from '@/payload-types'
 export const revalidate = 60 // Revalidate every minute
 
 interface PageProps {
-  params: Promise<{ [key: string]: string }>
+  params: Promise<{ id: string }>
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
@@ -134,8 +134,8 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
                 <p className="text-stone-600 text-xs xs:text-sm mb-2 line-clamp-1">
                   {product.description}
                 </p>
-                <div className="flex justify-between items-center">
-                  <div className="flex items-baseline gap-2">
+                <div className="flex flex-col items-start gap-2 mt-2">
+                  <div className="flex flex-col items-start">
                     {product.discountedPrice != null && product.discountedPrice < product.price ? (
                       <>
                         <span className="text-amber-800 font-semibold text-xs xs:text-sm">
@@ -153,7 +153,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
                   </div>
                   <Link
                     href={`/products/${product.id}`}
-                    className="text-xs bg-amber-700 hover:bg-amber-800 text-white py-1 px-2 xs:px-3 rounded-md transition-colors"
+                    className="text-xs bg-amber-700 hover:bg-amber-800 text-white py-1 px-2 xs:px-3 rounded-md transition-colors self-end"
                   >
                     View Details
                   </Link>

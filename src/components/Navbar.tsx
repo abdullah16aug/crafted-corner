@@ -2,17 +2,57 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Menu, X, ShoppingBag, User } from 'lucide-react'
+import { Menu, X, User, LogOut, LayoutDashboard } from 'lucide-react'
+import { CartIndicator } from './CartIndicator'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
+
+// Placeholder hook - Replace with your actual auth logic
+// This should likely fetch user status from Payload context or similar
+const useAuth = () => {
+  // Replace with real logic, maybe checking a cookie or context
+  const [user, setUser] = useState<{ email?: string } | null>(null) // Example: null or { email: '...' }
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Simulate fetching user state
+  React.useEffect(() => {
+    // In a real app, check auth status here (e.g., fetch '/api/users/me')
+    // For now, let's assume logged out initially after a delay
+    const timer = setTimeout(() => {
+      // setUser({ email: 'test@example.com' }); // Simulate logged in
+      setUser(null) // Simulate logged out
+      setIsLoading(false)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const logout = async () => {
+    // Call your logout API endpoint here
+    console.log('Logging out...')
+    // Example: await fetch('/api/users/logout', { method: 'POST' });
+    setUser(null) // Update state
+  }
+
+  return { user, isLoading, logout }
+}
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { user, isLoading, logout } = useAuth()
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
   }
 
   return (
-    <nav className="bg-stone-50 shadow-md">
+    <nav className="bg-stone-50 shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and desktop navigation */}
@@ -45,20 +85,55 @@ const Navbar = () => {
           </div>
 
           {/* Right side icons */}
-          <div className="hidden sm:flex items-center">
-            <Link href="/cart" className="p-2 text-stone-600 hover:text-amber-800">
-              <ShoppingBag className="h-6 w-6" />
-            </Link>
-            <Link href="/admin" className="p-2 text-stone-600 hover:text-amber-800 ml-4">
-              <User className="h-6 w-6" />
-            </Link>
+          <div className="hidden sm:flex items-center space-x-4">
+            <CartIndicator />
+
+            {/* Conditional User Icon/Login */}
+            {isLoading ? (
+              <div className="h-6 w-6 bg-gray-200 rounded-full animate-pulse"></div>
+            ) : user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <User className="h-5 w-5 text-stone-600 hover:text-amber-800" />
+                    <span className="sr-only">Open user menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">My Account</p>
+                      {user.email && (
+                        <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                      )}
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      <span>Admin Dashboard</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link href="/login">
+                <Button variant="ghost" size="sm">
+                  Login
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
           <div className="flex items-center sm:hidden">
-            <Link href="/cart" className="p-2 text-stone-600 hover:text-amber-800 mr-2">
-              <ShoppingBag className="h-6 w-6" />
-            </Link>
+            <CartIndicator />
             <button
               onClick={toggleMenu}
               className="inline-flex items-center justify-center p-2 rounded-md text-stone-600 hover:text-amber-800 hover:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-500"
@@ -102,12 +177,32 @@ const Navbar = () => {
             >
               Contact
             </Link>
-            <Link
-              href="/admin"
-              className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-stone-600 hover:bg-stone-100 hover:border-amber-500 hover:text-amber-800"
-            >
-              Admin
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/admin"
+                  className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-stone-600 hover:bg-stone-100 hover:border-amber-500 hover:text-amber-800"
+                >
+                  Admin
+                </Link>
+                <button
+                  onClick={async () => {
+                    await logout()
+                    toggleMenu()
+                  }}
+                  className="block w-full text-left pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-stone-600 hover:bg-stone-100 hover:border-amber-500 hover:text-amber-800"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-stone-600 hover:bg-stone-100 hover:border-amber-500 hover:text-amber-800"
+              >
+                Login
+              </Link>
+            )}
           </div>
         </div>
       )}
