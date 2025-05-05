@@ -25,6 +25,25 @@ const Products: CollectionConfig = {
       min: 0,
     },
     {
+      name: 'discountedPrice',
+      label: 'Discounted Price (Optional)',
+      type: 'number',
+      min: 0,
+      admin: {
+        description: 'Enter a price here to put the product on sale. Leave blank for no discount.',
+      },
+      // Ensure discounted price is not higher than the original price
+      validate: (
+        value: number | null | undefined,
+        { data }: { data?: { price?: number; [key: string]: any } },
+      ) => {
+        if (value != null && typeof data?.price === 'number' && value > data.price) {
+          return 'Discounted price cannot be higher than the original price.'
+        }
+        return true
+      },
+    },
+    {
       name: 'images',
       type: 'array',
       required: true,

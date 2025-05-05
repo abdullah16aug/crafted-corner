@@ -80,9 +80,22 @@ export default async function Home() {
                   {product.name}
                 </h3>
                 <div className="flex justify-between items-center">
-                  <span className="text-amber-800 font-semibold text-xs xs:text-sm">
-                    ₹{typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
-                  </span>
+                  <div className="flex items-baseline gap-2">
+                    {product.discountedPrice != null && product.discountedPrice < product.price ? (
+                      <>
+                        <span className="text-amber-800 font-semibold text-xs xs:text-sm">
+                          ₹{product.discountedPrice.toFixed(2)}
+                        </span>
+                        <span className="text-stone-500 line-through text-xs">
+                          ₹{typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-amber-800 font-semibold text-xs xs:text-sm">
+                        ₹{typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
+                      </span>
+                    )}
+                  </div>
                   <Link
                     href={`/products/${product.id}`}
                     className="text-xs bg-stone-100 hover:bg-stone-200 text-stone-800 py-1 px-2 xs:px-3 rounded-md transition-colors"

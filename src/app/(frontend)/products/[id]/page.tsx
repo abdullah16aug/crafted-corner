@@ -4,14 +4,16 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { Product } from '@/payload-types'
+import { Product, Media } from '@/payload-types'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel'
 
 export const revalidate = 60 // Revalidate every minute
-
-interface ImageObject {
-  url: string
-  [key: string]: any
-}
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -68,29 +70,53 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Link href="/" className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-6">
+      <Link
+        href="/products"
+        className="inline-flex items-center text-amber-700 hover:text-amber-800 mb-6"
+      >
         ← Back to Products
       </Link>
 
       <div className="bg-white shadow-lg rounded-lg overflow-hidden">
         <div className="md:flex">
-          {/* Product image */}
-          <div className="md:w-1/2">
-            <div className="relative h-96 md:h-full">
-              {product.images && product.images[0] && (
-                <Image
-                  src={
-                    typeof product.images[0].image === 'object'
-                      ? (product.images[0].image as ImageObject).url || '/placeholder-image.jpg'
-                      : '/placeholder-image.jpg'
-                  }
-                  alt={product.name || 'Product image'}
-                  fill
-                  priority
-                  style={{ objectFit: 'cover' }}
-                />
-              )}
-            </div>
+          {/* Product image Carousel */}
+          <div className="md:w-1/2 p-4">
+            <Carousel className="w-full max-w-xs mx-auto">
+              <CarouselContent>
+                {product.images && product.images.length > 0 ? (
+                  product.images.map((imgData, index) => (
+                    <CarouselItem key={imgData.id || index}>
+                      <div className="p-1">
+                        <div className="relative aspect-square">
+                          <Image
+                            src={
+                              typeof imgData.image === 'object'
+                                ? (imgData.image as Media).url || '/placeholder-image.jpg'
+                                : '/placeholder-image.jpg'
+                            }
+                            alt={`${product.name || 'Product image'} ${index + 1}`}
+                            fill
+                            priority={index === 0}
+                            style={{ objectFit: 'cover' }}
+                            className="rounded-md"
+                          />
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  ))
+                ) : (
+                  <CarouselItem>
+                    <div className="p-1">
+                      <div className="relative aspect-square bg-gray-100 rounded-md flex items-center justify-center">
+                        <span className="text-gray-400">No Image</span>
+                      </div>
+                    </div>
+                  </CarouselItem>
+                )}
+              </CarouselContent>
+              <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2" />
+              <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2" />
+            </Carousel>
           </div>
 
           {/* Product info */}
@@ -100,8 +126,24 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
               Category: {typeof product.category === 'object' ? product.category.name : 'Unknown'}
             </p>
 
-            <div className="text-2xl font-bold text-blue-600 mb-6">
-              ${typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
+            <div className="flex items-baseline gap-3 mb-6">
+              {product.discountedPrice != null && product.discountedPrice < product.price ? (
+                <>
+                  <span className="text-2xl font-bold text-red-600">
+                    ₹{product.discountedPrice.toFixed(2)}
+                  </span>
+                  <span className="text-xl font-medium text-gray-500 line-through">
+                    ₹{typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
+                  </span>
+                  <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-semibold rounded">
+                    SALE
+                  </span>
+                </>
+              ) : (
+                <span className="text-2xl font-bold text-blue-600">
+                  ₹{typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
+                </span>
+              )}
             </div>
 
             <p className="text-gray-700 mb-6">{product.description}</p>
@@ -120,7 +162,7 @@ export default async function ProductPage({ params, searchParams }: PageProps) {
             </div>
 
             <button
-              className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded ${product.inventory <= 0 && 'opacity-50 cursor-not-allowed'}`}
+              className={`w-full bg-amber-700 hover:bg-amber-800 text-white font-bold py-3 px-4 rounded ${product.inventory <= 0 && 'opacity-50 cursor-not-allowed'}`}
               disabled={product.inventory <= 0}
             >
               {product.inventory > 0 ? 'Add to Cart' : 'Out of Stock'}

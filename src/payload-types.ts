@@ -198,6 +198,10 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  /**
+   * Enter a price here to put the product on sale. Leave blank for no discount.
+   */
+  discountedPrice?: number | null;
   images: {
     image: string | Media;
     id?: string | null;
@@ -401,6 +405,7 @@ export interface ProductsSelect<T extends boolean = true> {
   name?: T;
   description?: T;
   price?: T;
+  discountedPrice?: T;
   images?:
     | T
     | {
