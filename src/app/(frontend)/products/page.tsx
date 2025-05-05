@@ -5,6 +5,8 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { Media, Category } from '@/payload-types'
 
+export const revalidate = 60 // Revalidate every minute
+
 interface PageProps {
   params: Promise<{ [key: string]: string }>
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>

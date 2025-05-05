@@ -6,6 +6,8 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { Product } from '@/payload-types'
 
+export const revalidate = 60 // Revalidate every minute
+
 interface ImageObject {
   url: string
   [key: string]: any
