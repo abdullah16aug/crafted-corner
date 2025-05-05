@@ -19,6 +19,15 @@ const Categories: CollectionConfig = {
       type: 'textarea',
     },
     {
+      name: 'icon',
+      type: 'upload',
+      relationTo: 'media',
+      required: true,
+      admin: {
+        description: 'Upload an icon image for this category',
+      },
+    },
+    {
       name: 'parent',
       type: 'relationship',
       relationTo: 'categories',

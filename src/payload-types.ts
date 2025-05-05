@@ -155,6 +155,14 @@ export interface Media {
   focalX?: number | null;
   focalY?: number | null;
   sizes?: {
+    icon?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
     thumbnail?: {
       url?: string | null;
       width?: number | null;
@@ -221,6 +229,10 @@ export interface Category {
   id: string;
   name: string;
   description?: string | null;
+  /**
+   * Upload an icon image for this category
+   */
+  icon: string | Media;
   parent?: (string | null) | Category;
   updatedAt: string;
   createdAt: string;
@@ -355,6 +367,16 @@ export interface MediaSelect<T extends boolean = true> {
   sizes?:
     | T
     | {
+        icon?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
         thumbnail?:
           | T
           | {
@@ -426,6 +448,7 @@ export interface ProductsSelect<T extends boolean = true> {
 export interface CategoriesSelect<T extends boolean = true> {
   name?: T;
   description?: T;
+  icon?: T;
   parent?: T;
   updatedAt?: T;
   createdAt?: T;

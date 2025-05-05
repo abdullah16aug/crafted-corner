@@ -1,5 +1,5 @@
 import React from 'react'
-import './styles.css'
+import './globals.css'
 import Navbar from '@/components/Navbar'
 import { Toaster } from '@/components/ui/toaster'
 

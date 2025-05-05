@@ -20,7 +20,7 @@ export default async function Home() {
   try {
     const [productsData, categoriesData] = await Promise.all([
       payload.find({ collection: 'products', limit: 4, depth: 1 }), // Fetch limited products, maybe add depth: 1 for image url
-      payload.find({ collection: 'categories', depth: 0 }),
+      payload.find({ collection: 'categories', depth: 2 }), // Increased depth to get the icon media
     ])
     products = productsData.docs
     categories = categoriesData.docs
@@ -74,14 +74,24 @@ export default async function Home() {
             Shop by Category
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {categories.map((category: Category) => (
+            {categories.map((category: any) => (
               <Link
                 key={category.id}
                 href={`/products?category=${category.id}`}
                 className="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-shadow"
               >
-                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-amber-100 flex items-center justify-center">
-                  <span className="text-amber-700 text-xl">{getCategoryIcon(category.name)}</span>
+                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-amber-50 flex items-center justify-center overflow-hidden">
+                  {category.icon && typeof category.icon === 'object' && 'url' in category.icon ? (
+                    <Image
+                      src={category.icon.url as string}
+                      alt={category.name || 'Category icon'}
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-amber-700 text-xl">{getCategoryIcon(category.name)}</span>
+                  )}
                 </div>
                 <h3 className="font-medium text-stone-800">{category.name}</h3>
               </Link>
@@ -110,7 +120,7 @@ export default async function Home() {
   )
 }
 
-// Helper function to get an appropriate icon for each category
+// Helper function to get an appropriate icon for each category (as fallback)
 function getCategoryIcon(categoryName?: string): string {
   if (!categoryName) return '✧'
 

@@ -12,6 +12,12 @@ export const Media: CollectionConfig = {
   upload: {
     imageSizes: [
       {
+        name: 'icon',
+        width: 64,
+        height: 64,
+        position: 'centre',
+      },
+      {
         name: 'thumbnail',
         width: 400,
         height: 300,
