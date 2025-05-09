@@ -4,8 +4,8 @@ import Navbar from '@/components/Navbar'
 import { Toaster } from '@/components/ui/toaster'
 
 export const metadata = {
-  description: 'Crafted Corner - Handmade crafts and unique items',
-  title: 'Crafted Corner',
+  description: 'Krafted Korner - Handmade crafts and unique items',
+  title: 'Krafted Korner',
 }
 
 export default async function RootLayout(props: { children: React.ReactNode }) {

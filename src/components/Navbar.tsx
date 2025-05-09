@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Menu, LayoutDashboard, ShoppingBag } from 'lucide-react'
+import { Menu, LayoutDashboard, ChevronDown } from 'lucide-react'
 import { CartIndicator } from './CartIndicator'
 import {
   DropdownMenu,
@@ -22,7 +22,7 @@ const Navbar = () => {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/" className="font-serif font-bold text-xl text-amber-800">
-                Crafted Corner
+                Krafted Korner
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
@@ -44,6 +44,37 @@ const Navbar = () => {
               >
                 Contact
               </Link>
+
+              {/* Policies Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-stone-600 hover:text-amber-800 hover:border-amber-500">
+                    Policies <ChevronDown className="ml-1 h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" sideOffset={8} className="bg-white">
+                  <DropdownMenuItem>
+                    <Link href="/terms" className="flex w-full">
+                      Terms & Conditions
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/privacy-policy" className="flex w-full">
+                      Privacy Policy
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/refund-policy" className="flex w-full">
+                      Refund Policy
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/data-removal" className="flex w-full">
+                      Data Removal
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
@@ -78,6 +109,28 @@ const Navbar = () => {
                 <DropdownMenuItem>
                   <Link href="/contact" className="flex w-full">
                     Contact
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {/* Policies submenu items */}
+                <DropdownMenuItem>
+                  <Link href="/terms" className="flex w-full">
+                    Terms & Conditions
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link href="/privacy-policy" className="flex w-full">
+                    Privacy Policy
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link href="/refund-policy" className="flex w-full">
+                    Refund Policy
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link href="/data-removal" className="flex w-full">
+                    Data Removal
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

@@ -72,6 +72,7 @@ export interface Config {
     products: Product;
     categories: Category;
     orders: Order;
+    pages: Page;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -83,6 +84,7 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -244,7 +246,12 @@ export interface Category {
 export interface Order {
   id: string;
   orderNumber: string;
-  customer: string | User;
+  customer?: (string | null) | User;
+  guestInfo?: {
+    name: string;
+    email: string;
+    phone: string;
+  };
   items: {
     product: string | Product;
     quantity: number;
@@ -252,6 +259,17 @@ export interface Order {
     id?: string | null;
   }[];
   totalAmount: number;
+  paymentMethod: 'cod' | 'razorpay';
+  isPaid?: boolean | null;
+  razorpayDetails?: {
+    razorpay_id?: string | null;
+    entity?: string | null;
+    amount_paid?: number | null;
+    amount_due?: number | null;
+    currency?: string | null;
+    receipt?: string | null;
+    status?: string | null;
+  };
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   shippingAddress: {
     street: string;
@@ -259,6 +277,63 @@ export interface Order {
     state: string;
     zipCode: string;
     country: string;
+  };
+  notes?:
+    | {
+        desc?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: string;
+  title: string;
+  type: 'about' | 'contact' | 'terms' | 'privacy-policy' | 'refund-policy' | 'data-removal';
+  content?: {
+    sections?:
+      | {
+          title: string;
+          content: {
+            root: {
+              type: string;
+              children: {
+                type: string;
+                version: number;
+                [k: string]: unknown;
+              }[];
+              direction: ('ltr' | 'rtl') | null;
+              format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+              indent: number;
+              version: number;
+            };
+            [k: string]: unknown;
+          };
+          id?: string | null;
+        }[]
+      | null;
+  };
+  contactInfo?: {
+    address: string;
+    phone: string;
+    email: string;
+    businessHours?:
+      | {
+          day: string;
+          hours: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  seo?: {
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    keywords?: string | null;
   };
   updatedAt: string;
   createdAt: string;
@@ -289,6 +364,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'orders';
         value: string | Order;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: string | Page;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -460,6 +539,13 @@ export interface CategoriesSelect<T extends boolean = true> {
 export interface OrdersSelect<T extends boolean = true> {
   orderNumber?: T;
   customer?: T;
+  guestInfo?:
+    | T
+    | {
+        name?: T;
+        email?: T;
+        phone?: T;
+      };
   items?:
     | T
     | {
@@ -469,6 +555,19 @@ export interface OrdersSelect<T extends boolean = true> {
         id?: T;
       };
   totalAmount?: T;
+  paymentMethod?: T;
+  isPaid?: T;
+  razorpayDetails?:
+    | T
+    | {
+        razorpay_id?: T;
+        entity?: T;
+        amount_paid?: T;
+        amount_due?: T;
+        currency?: T;
+        receipt?: T;
+        status?: T;
+      };
   status?: T;
   shippingAddress?:
     | T
@@ -478,6 +577,54 @@ export interface OrdersSelect<T extends boolean = true> {
         state?: T;
         zipCode?: T;
         country?: T;
+      };
+  notes?:
+    | T
+    | {
+        desc?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages_select".
+ */
+export interface PagesSelect<T extends boolean = true> {
+  title?: T;
+  type?: T;
+  content?:
+    | T
+    | {
+        sections?:
+          | T
+          | {
+              title?: T;
+              content?: T;
+              id?: T;
+            };
+      };
+  contactInfo?:
+    | T
+    | {
+        address?: T;
+        phone?: T;
+        email?: T;
+        businessHours?:
+          | T
+          | {
+              day?: T;
+              hours?: T;
+              id?: T;
+            };
+      };
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        keywords?: T;
       };
   updatedAt?: T;
   createdAt?: T;

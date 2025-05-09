@@ -1,4 +1,6 @@
 import type { CollectionConfig } from 'payload'
+import { admins } from '../access/admins'
+import adminsAndLoggedIn from '../access/adminsAndLoggedIn'
 
 const Orders: CollectionConfig = {
   slug: 'orders',
@@ -6,7 +8,10 @@ const Orders: CollectionConfig = {
     useAsTitle: 'orderNumber',
   },
   access: {
-    read: () => true,
+    read: adminsAndLoggedIn,
+    create: () => true, // Allow guest users to create orders
+    update: admins,
+    delete: admins,
   },
   fields: [
     {
@@ -19,7 +24,31 @@ const Orders: CollectionConfig = {
       name: 'customer',
       type: 'relationship',
       relationTo: 'users',
-      required: true,
+      required: false,
+    },
+    {
+      name: 'guestInfo',
+      type: 'group',
+      fields: [
+        {
+          name: 'name',
+          type: 'text',
+          required: true,
+        },
+        {
+          name: 'email',
+          type: 'email',
+          required: true,
+        },
+        {
+          name: 'phone',
+          type: 'text',
+          required: true,
+        },
+      ],
+      admin: {
+        condition: (data) => !data.customer,
+      },
     },
     {
       name: 'items',
@@ -51,6 +80,64 @@ const Orders: CollectionConfig = {
       type: 'number',
       required: true,
       min: 0,
+    },
+    {
+      name: 'paymentMethod',
+      type: 'select',
+      required: true,
+      options: [
+        {
+          label: 'Cash on Delivery',
+          value: 'cod',
+        },
+        {
+          label: 'Razorpay',
+          value: 'razorpay',
+        },
+      ],
+    },
+    {
+      name: 'isPaid',
+      type: 'checkbox',
+      defaultValue: false,
+    },
+    {
+      name: 'razorpayDetails',
+      type: 'group',
+      fields: [
+        {
+          name: 'razorpay_id',
+          type: 'text',
+        },
+        {
+          name: 'entity',
+          type: 'text',
+        },
+        {
+          name: 'amount_paid',
+          type: 'number',
+        },
+        {
+          name: 'amount_due',
+          type: 'number',
+        },
+        {
+          name: 'currency',
+          type: 'text',
+          defaultValue: 'INR',
+        },
+        {
+          name: 'receipt',
+          type: 'text',
+        },
+        {
+          name: 'status',
+          type: 'text',
+        },
+      ],
+      admin: {
+        condition: (data) => data.paymentMethod === 'razorpay',
+      },
     },
     {
       name: 'status',
@@ -111,7 +198,18 @@ const Orders: CollectionConfig = {
         },
       ],
     },
+    {
+      name: 'notes',
+      type: 'array',
+      fields: [
+        {
+          name: 'desc',
+          type: 'text',
+        },
+      ],
+    },
   ],
+  timestamps: true,
 }
 
 export default Orders

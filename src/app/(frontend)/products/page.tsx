@@ -13,7 +13,7 @@ interface PageProps {
 }
 
 export const metadata = {
-  title: 'Products | Crafted Corner',
+  title: 'Products | Krafted Korner',
   description: 'Browse our handcrafted products',
 }
 
