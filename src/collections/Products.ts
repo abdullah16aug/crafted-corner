@@ -19,6 +19,16 @@ const Products: CollectionConfig = {
       required: true,
     },
     {
+      name: 'featured',
+      type: 'checkbox',
+      label: 'Featured Product',
+      defaultValue: false,
+      admin: {
+        description: 'Show this product on the home page as a featured product',
+        position: 'sidebar',
+      },
+    },
+    {
       name: 'price',
       type: 'number',
       required: true,

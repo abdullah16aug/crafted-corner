@@ -14,6 +14,7 @@ import Products from './collections/Products'
 import Categories from './collections/Categories'
 import Orders from './collections/Orders'
 import { Pages } from './collections/Pages'
+import { SiteSettings } from './globals/SiteSettings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -26,6 +27,7 @@ export default buildConfig({
     },
   },
   collections: [Users, Media, Products, Categories, Orders, Pages],
+  globals: [SiteSettings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

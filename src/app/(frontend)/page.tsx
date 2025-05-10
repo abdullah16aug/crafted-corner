@@ -46,19 +46,26 @@ export default async function Home() {
   const payload = await getPayload({ config })
 
   // Fetch data server-side
-  let products: Product[] = []
+  let featuredProducts: Product[] = []
   let categories: Category[] = []
   try {
     const [productsData, categoriesData] = await Promise.all([
-      payload.find({ collection: 'products', limit: 4, depth: 1 }), // Fetch limited products, maybe add depth: 1 for image url
-      payload.find({ collection: 'categories', depth: 2 }), // Increased depth to get the icon media
+      payload.find({
+        collection: 'products',
+        where: {
+          and: [{ featured: { equals: true } }, { status: { equals: 'published' } }],
+        },
+        limit: 8,
+        depth: 1,
+      }),
+      payload.find({ collection: 'categories', depth: 2 }),
     ])
-    products = productsData.docs
+    featuredProducts = productsData.docs
     categories = categoriesData.docs
   } catch (error) {
     console.error('Failed to fetch homepage data:', error)
     // Handle error appropriately, maybe show fewer items or a message
   }
 
-  return <HomeClient products={products} categories={categories} />
+  return <HomeClient products={featuredProducts} categories={categories} />
 }

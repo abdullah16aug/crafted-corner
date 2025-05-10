@@ -27,24 +27,20 @@ export default function FeaturedProductsClient({ products }: FeaturedProductsCli
       toast({
         title: 'Already in cart',
         description: `${product.name} is already in your cart.`,
-        className:
-          'bg-pink-100 border-pink-200 text-pink-800 dark:bg-pink-900 dark:border-pink-800 dark:text-pink-200',
+        className: 'bg-yellow-100 border-yellow-200 text-yellow-800',
       })
     } else if (product.inventory > 0) {
       addItemToCart(product)
       toast({
         title: 'Added to cart!',
         description: `${product.name} has been added to your cart.`,
-        className:
-          'bg-pink-100 border-pink-200 text-pink-800 dark:bg-pink-900 dark:border-pink-800 dark:text-pink-200',
+        className: 'bg-green-100 border-green-200 text-green-800',
       })
     } else {
       toast({
         title: 'Out of Stock',
         description: `${product.name} cannot be added as it's out of stock.`,
         variant: 'destructive',
-        className:
-          'bg-pink-100 border-pink-200 text-pink-800 dark:bg-pink-900 dark:border-pink-800 dark:text-pink-200',
       })
     }
   }

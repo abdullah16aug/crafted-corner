@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Product, Category, Media } from '@/payload-types'
+import { Product, Category } from '@/payload-types'
 import Link from 'next/link'
 import Image from 'next/image'
 import FeaturedProductsClient from '@/components/FeaturedProductsClient'
@@ -37,7 +37,12 @@ export default function HomeClient({ products, categories }: HomeClientProps) {
       {/* Featured products section */}
       <div className="container mx-auto px-4 py-16">
         <div className="flex justify-between items-baseline mb-8">
-          <h2 className="text-2xl font-serif font-semibold text-stone-800">Featured Products</h2>
+          <div>
+            <h2 className="text-2xl font-serif font-semibold text-stone-800">Featured Products</h2>
+            <p className="text-stone-600 text-sm mt-1">
+              Handpicked items we think you&apos;ll love
+            </p>
+          </div>
           <Link
             href="/products"
             className="text-amber-700 hover:text-amber-900 font-medium text-sm"
@@ -46,8 +51,15 @@ export default function HomeClient({ products, categories }: HomeClientProps) {
           </Link>
         </div>
 
-        {/* Render the client component for the grid */}
-        <FeaturedProductsClient products={products} />
+        {products.length === 0 ? (
+          <div className="text-center py-10 text-stone-500">
+            <p>No featured products available right now.</p>
+            <p className="text-sm mt-2">Check back soon for new featured items!</p>
+          </div>
+        ) : (
+          /* Render the client component for the grid */
+          <FeaturedProductsClient products={products} />
+        )}
       </div>
 
       {/* Categories section */}
@@ -57,23 +69,27 @@ export default function HomeClient({ products, categories }: HomeClientProps) {
             Shop by Category
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {categories.map((category: any) => (
+            {categories.map((category: Category) => (
               <Link
                 key={category.id}
                 href={`/products?category=${category.id}`}
                 className="bg-white p-4 rounded-lg shadow-sm text-center hover:shadow-md transition-shadow"
               >
-                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-amber-50 flex items-center justify-center overflow-hidden">
+                <div className="mx-auto mb-3 flex items-center justify-center">
                   {category.icon && typeof category.icon === 'object' && 'url' in category.icon ? (
                     <Image
                       src={category.icon.url as string}
                       alt={category.name || 'Category icon'}
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover"
+                      width={80}
+                      height={80}
+                      className="max-h-24 w-auto object-contain"
                     />
                   ) : (
-                    <span className="text-amber-700 text-xl">{getCategoryIcon(category.name)}</span>
+                    <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center">
+                      <span className="text-amber-700 text-xl">
+                        {getCategoryIcon(category.name)}
+                      </span>
+                    </div>
                   )}
                 </div>
                 <h3 className="font-medium text-stone-800">{category.name}</h3>

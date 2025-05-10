@@ -92,8 +92,12 @@ export interface Config {
   db: {
     defaultIDType: string;
   };
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'site-settings': SiteSetting;
+  };
+  globalsSelect: {
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+  };
   locale: null;
   user: User & {
     collection: 'users';
@@ -127,6 +131,15 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: string;
+  name?: string | null;
+  role?: ('admin' | 'user') | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  country?: string | null;
+  profilePicture?: (string | null) | Media;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -207,6 +220,10 @@ export interface Product {
   id: string;
   name: string;
   description: string;
+  /**
+   * Show this product on the home page as a featured product
+   */
+  featured?: boolean | null;
   price: number;
   /**
    * Enter a price here to put the product on sale. Leave blank for no discount.
@@ -245,6 +262,9 @@ export interface Category {
  */
 export interface Order {
   id: string;
+  /**
+   * Auto-generated unique order number
+   */
   orderNumber: string;
   customer?: (string | null) | User;
   guestInfo?: {
@@ -416,6 +436,15 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  name?: T;
+  role?: T;
+  phone?: T;
+  address?: T;
+  city?: T;
+  state?: T;
+  zip?: T;
+  country?: T;
+  profilePicture?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -505,6 +534,7 @@ export interface MediaSelect<T extends boolean = true> {
 export interface ProductsSelect<T extends boolean = true> {
   name?: T;
   description?: T;
+  featured?: T;
   price?: T;
   discountedPrice?: T;
   images?:
@@ -660,6 +690,105 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: string;
+  companyInfo: {
+    name: string;
+    tagline?: string | null;
+    address?: string | null;
+  };
+  contactInfo: {
+    email: string;
+    phone?: string | null;
+    /**
+     * Include country code. E.g., +911234567890
+     */
+    whatsapp?: string | null;
+  };
+  socialMedia?: {
+    links?:
+      | {
+          platform: 'facebook' | 'instagram' | 'twitter' | 'pinterest' | 'youtube' | 'linkedin';
+          url: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  footerLinks?:
+    | {
+        category: string;
+        links?:
+          | {
+              label: string;
+              url: string;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  copyright?: {
+    text?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  companyInfo?:
+    | T
+    | {
+        name?: T;
+        tagline?: T;
+        address?: T;
+      };
+  contactInfo?:
+    | T
+    | {
+        email?: T;
+        phone?: T;
+        whatsapp?: T;
+      };
+  socialMedia?:
+    | T
+    | {
+        links?:
+          | T
+          | {
+              platform?: T;
+              url?: T;
+              id?: T;
+            };
+      };
+  footerLinks?:
+    | T
+    | {
+        category?: T;
+        links?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  copyright?:
+    | T
+    | {
+        text?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

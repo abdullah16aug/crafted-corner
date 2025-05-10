@@ -1,11 +1,11 @@
 import React from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { Media, Category } from '@/payload-types'
+import { Category } from '@/payload-types'
+import ProductsClient from '@/components/products/ProductsClient'
 
-export const revalidate = 60 // Revalidate every minute
+export const revalidate = 3600 // Revalidate every minute
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -17,8 +17,8 @@ export const metadata = {
   description: 'Browse our handcrafted products',
 }
 
-export default async function ProductsPage({ params, searchParams }: PageProps) {
-  // Ignore params as it's not used
+export default async function ProductsPage({ params: _params, searchParams }: PageProps) {
+  // searchParams is used, but params is not needed
   const searchParamsValue = await searchParams
   const payload = await getPayload({ config })
 
@@ -33,11 +33,12 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
             equals: categoryId,
           },
         },
-        limit: 20,
+        limit: 6, // Initial limit reduced to 8 for faster initial loading
+        page: 1,
       }
-    : { limit: 20 }
+    : { limit: 6, page: 1 }
 
-  // Fetch products with optional category filter
+  // Fetch initial products with optional category filter
   const products = await payload.find({
     collection: 'products',
     ...query,
@@ -105,66 +106,14 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
           ))}
         </div>
 
-        {/* Products grid */}
-        <div className="grid grid-cols-2 gap-4 sm:gap-5">
-          {products.docs.map((product) => (
-            <div
-              key={product.id}
-              className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300 group"
-            >
-              <div className="relative h-40 xs:h-48 overflow-hidden">
-                {product.images && product.images[0] && (
-                  <Image
-                    src={
-                      typeof product.images[0].image === 'object'
-                        ? (product.images[0].image as Media).url || '/placeholder-image.jpg'
-                        : '/placeholder-image.jpg'
-                    }
-                    alt={product.name || 'Product image'}
-                    fill
-                    style={{ objectFit: 'cover' }}
-                    className="group-hover:scale-105 transition-transform duration-300"
-                  />
-                )}
-              </div>
-              <div className="p-3 xs:p-4">
-                <h3 className="text-sm xs:text-base font-medium text-stone-800 mb-1">
-                  {product.name}
-                </h3>
-                <p className="text-stone-600 text-xs xs:text-sm mb-2 line-clamp-1">
-                  {product.description}
-                </p>
-                <div className="flex flex-col items-start gap-2 mt-2">
-                  <div className="flex flex-col items-start">
-                    {product.discountedPrice != null && product.discountedPrice < product.price ? (
-                      <>
-                        <span className="text-amber-800 font-semibold text-xs xs:text-sm">
-                          ₹{product.discountedPrice.toFixed(2)}
-                        </span>
-                        <span className="text-stone-500 line-through text-xs">
-                          ₹{typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-amber-800 font-semibold text-xs xs:text-sm">
-                        ₹{typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}
-                      </span>
-                    )}
-                  </div>
-                  <Link
-                    href={`/products/${product.id}`}
-                    className="text-xs bg-amber-700 hover:bg-amber-800 text-white py-1 px-2 xs:px-3 rounded-md transition-colors self-end"
-                  >
-                    View Details
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Empty state */}
-        {products.docs.length === 0 && (
+        {/* Products with infinite scroll */}
+        {products.docs.length > 0 ? (
+          <ProductsClient
+            initialProducts={products.docs}
+            categoryId={categoryId}
+            totalProducts={products.totalDocs}
+          />
+        ) : (
           <div className="text-center py-16">
             <p className="text-stone-600 mb-6">No products found in this category.</p>
             <Link

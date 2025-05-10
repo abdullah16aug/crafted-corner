@@ -2,13 +2,12 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Menu, LayoutDashboard, ChevronDown } from 'lucide-react'
+import { Menu, ChevronDown } from 'lucide-react'
 import { CartIndicator } from './CartIndicator'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
@@ -99,45 +98,6 @@ const Navbar = () => {
                 <DropdownMenuItem>
                   <Link href="/products" className="flex w-full">
                     Products
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/about" className="flex w-full">
-                    About
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/contact" className="flex w-full">
-                    Contact
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {/* Policies submenu items */}
-                <DropdownMenuItem>
-                  <Link href="/terms" className="flex w-full">
-                    Terms & Conditions
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/privacy-policy" className="flex w-full">
-                    Privacy Policy
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/refund-policy" className="flex w-full">
-                    Refund Policy
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/data-removal" className="flex w-full">
-                    Data Removal
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Link href="/admin" className="flex w-full items-center">
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    <span>Admin</span>
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>

@@ -41,7 +41,7 @@ export default function CartClient() {
             {items.map((item) => (
               <div
                 key={item.product.id}
-                className="flex items-center gap-4 p-4 border rounded-lg bg-white shadow-sm"
+                className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 border rounded-lg bg-white shadow-sm"
               >
                 {/* Image */}
                 <div className="flex-shrink-0 w-20 h-20 relative rounded overflow-hidden">
@@ -58,6 +58,7 @@ export default function CartClient() {
                     />
                   )}
                 </div>
+
                 {/* Details */}
                 <div className="flex-grow">
                   <Link
@@ -85,30 +86,33 @@ export default function CartClient() {
                     )}
                   </div>
                 </div>
-                {/* Quantity Controls */}
-                <div className="flex items-center gap-2 border rounded-md p-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => decreaseQuantity(item.product.id)}
-                    aria-label="Decrease quantity"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="w-8 text-center font-medium text-sm">{item.quantity}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => increaseQuantity(item.product.id)}
-                    aria-label="Increase quantity"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                {/* Remove Button */}
-                <div>
+
+                {/* Controls Container - Quantity and Remove together on mobile */}
+                <div className="flex items-center justify-between gap-4 w-full sm:w-auto mt-3 sm:mt-0">
+                  {/* Quantity Controls */}
+                  <div className="flex items-center gap-2 border rounded-md p-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => decreaseQuantity(item.product.id)}
+                      aria-label="Decrease quantity"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-8 text-center font-medium text-sm">{item.quantity}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => increaseQuantity(item.product.id)}
+                      aria-label="Increase quantity"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {/* Remove Button */}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -139,9 +143,11 @@ export default function CartClient() {
                 <span>Estimated Total</span>
                 <span>₹{subtotal.toFixed(2)}</span>
               </div>
-              <Button className="w-full mt-6 bg-amber-700 hover:bg-amber-800">
-                Proceed to Checkout
-              </Button>
+              <Link href="/checkout">
+                <Button className="w-full mt-6 bg-amber-700 hover:bg-amber-800">
+                  Proceed to Checkout
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

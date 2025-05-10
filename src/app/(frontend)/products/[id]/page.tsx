@@ -1,11 +1,10 @@
 import React from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
-import { Product, Media } from '@/payload-types'
+import { Product } from '@/payload-types'
 // Import the new client component we will create
 import ProductDetailsClient from '@/components/ProductDetailsClient'
 

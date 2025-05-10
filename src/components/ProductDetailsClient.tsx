@@ -27,6 +27,7 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
       toast({
         title: 'Added to cart!',
         description: `${product.name} has been added to your cart.`,
+        className: 'bg-green-100 border-green-200 text-green-800',
       })
     }
   }
