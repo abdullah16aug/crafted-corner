@@ -1,128 +1,117 @@
 import React from 'react'
 
-type TextNode = {
-  detail: number
-  format: number
-  mode: string
-  style: string
+// Define a proper interface for the rich text content
+interface RichTextContent {
+  root: {
+    children: Node[]
+    [key: string]: unknown
+  }
+  [key: string]: unknown
+}
+
+// Generic node interface
+interface Node {
+  type: string
+  children?: Node[]
+  [key: string]: unknown
+}
+
+// Text node
+interface TextNode extends Node {
+  type: 'text'
   text: string
-  type: string
-  version: number
+  format?: number
 }
 
-type ListItemNode = {
-  children: Array<any>
-  direction: string
-  format: string
-  indent: number
-  type: string
-  version: number
-  value: number
-  textFormat?: number
+// Paragraph node
+interface ParagraphNode extends Node {
+  type: 'paragraph'
+  children: Node[]
 }
 
-type ListNode = {
-  children: Array<any>
-  direction: string
-  format: string
-  indent: number
-  type: string
-  version: number
-  listType: string
-  start: number
-  tag: string
+// Heading node
+interface HeadingNode extends Node {
+  type: 'heading'
+  tag: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+  children: Node[]
 }
 
-type HeadingNode = {
-  children: Array<any>
-  direction: string
-  format: string
-  indent: number
-  type: string
-  version: number
-  tag: string
+// List node
+interface ListNode extends Node {
+  type: 'list'
+  listType: 'bullet' | 'number'
+  children: Node[]
 }
 
-type ParagraphNode = {
-  children: Array<any>
-  direction: string
-  format: string
-  indent: number
-  type: string
-  version: number
-  textFormat?: number
-  textStyle?: string
+// List item node
+interface ListItemNode extends Node {
+  type: 'listitem'
+  children: Node[]
 }
 
-type RootNode = {
-  children: Array<any>
-  direction: string
-  format: string
-  indent: number
-  type: string
-  version: number
-}
-
-const RichText = ({ content }: { content: any }) => {
+const RichText = ({ content }: { content: RichTextContent }) => {
   if (!content || !content.root) return null
 
-  const renderNode = (node: any, index: number) => {
+  const renderNode = (node: Node, index: number) => {
     if (!node) return null
 
     // Handle text nodes
     if (node.type === 'text') {
+      const textNode = node as TextNode
       let className = ''
-      if (node.format === 1) className = 'font-bold'
-      if (node.format === 2) className = 'italic'
-      if (node.format === 3) className = 'font-bold italic'
+      if (textNode.format === 1) className = 'font-bold'
+      if (textNode.format === 2) className = 'italic'
+      if (textNode.format === 3) className = 'font-bold italic'
 
       return (
         <span key={index} className={className}>
-          {node.text}
+          {textNode.text}
         </span>
       )
     }
 
     // Handle paragraphs
     if (node.type === 'paragraph') {
+      const paragraphNode = node as ParagraphNode
       return (
         <p key={index} className="mb-4">
-          {node.children?.map(renderNode)}
+          {paragraphNode.children?.map(renderNode)}
         </p>
       )
     }
 
     // Handle headings
     if (node.type === 'heading') {
-      switch (node.tag) {
+      const headingNode = node as HeadingNode
+      switch (headingNode.tag) {
         case 'h1':
           return (
             <h1 key={index} className="text-3xl font-bold mb-4">
-              {node.children?.map(renderNode)}
+              {headingNode.children?.map(renderNode)}
             </h1>
           )
         case 'h2':
           return (
             <h2 key={index} className="text-2xl font-bold mb-3">
-              {node.children?.map(renderNode)}
+              {headingNode.children?.map(renderNode)}
             </h2>
           )
         case 'h3':
           return (
             <h3 key={index} className="text-xl font-bold mb-2">
-              {node.children?.map(renderNode)}
+              {headingNode.children?.map(renderNode)}
             </h3>
           )
         case 'h4':
           return (
             <h4 key={index} className="text-lg font-bold mb-2">
-              {node.children?.map(renderNode)}
+              {headingNode.children?.map(renderNode)}
             </h4>
           )
         default:
           return (
             <h3 key={index} className="text-xl font-bold mb-2">
-              {node.children?.map(renderNode)}
+              {headingNode.children?.map(renderNode)}
             </h3>
           )
       }
@@ -130,16 +119,17 @@ const RichText = ({ content }: { content: any }) => {
 
     // Handle lists
     if (node.type === 'list') {
-      if (node.listType === 'bullet') {
+      const listNode = node as ListNode
+      if (listNode.listType === 'bullet') {
         return (
           <ul key={index} className="list-disc pl-6 mb-4">
-            {node.children?.map(renderNode)}
+            {listNode.children?.map(renderNode)}
           </ul>
         )
       } else {
         return (
           <ol key={index} className="list-decimal pl-6 mb-4">
-            {node.children?.map(renderNode)}
+            {listNode.children?.map(renderNode)}
           </ol>
         )
       }
@@ -147,9 +137,10 @@ const RichText = ({ content }: { content: any }) => {
 
     // Handle list items
     if (node.type === 'listitem') {
+      const listItemNode = node as ListItemNode
       return (
         <li key={index} className="mb-1">
-          {node.children?.map(renderNode)}
+          {listItemNode.children?.map(renderNode)}
         </li>
       )
     }

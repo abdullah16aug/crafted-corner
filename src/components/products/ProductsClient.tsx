@@ -24,44 +24,6 @@ export default function ProductsClient({
   const observer = useRef<IntersectionObserver | null>(null)
   const { toast } = useToast()
 
-  const loadMoreProducts = async () => {
-    if (isLoading || !hasMore) return
-
-    setIsLoading(true)
-    const nextPage = page + 1
-
-    try {
-      const url = categoryId
-        ? `/api/products?page=${nextPage}&limit=8&category=${categoryId}`
-        : `/api/products?page=${nextPage}&limit=8`
-
-      const response = await fetch(url)
-
-      if (!response.ok) {
-        throw new Error('Failed to load more products')
-      }
-
-      const data = await response.json()
-
-      if (data.docs.length > 0) {
-        setProducts((prevProducts) => [...prevProducts, ...data.docs])
-        setPage(nextPage)
-        setHasMore(products.length + data.docs.length < totalProducts)
-      } else {
-        setHasMore(false)
-      }
-    } catch (error) {
-      console.error('Error loading more products:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to load more products. Please try again.',
-        variant: 'destructive',
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const lastProductElementRef = useCallback(
     (node: HTMLDivElement | null) => {
       if (isLoading) return
@@ -69,13 +31,51 @@ export default function ProductsClient({
 
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasMore) {
+          const loadMoreProducts = async () => {
+            if (isLoading || !hasMore) return
+
+            setIsLoading(true)
+            const nextPage = page + 1
+
+            try {
+              const url = categoryId
+                ? `/api/products?page=${nextPage}&limit=8&category=${categoryId}`
+                : `/api/products?page=${nextPage}&limit=8`
+
+              const response = await fetch(url)
+
+              if (!response.ok) {
+                throw new Error('Failed to load more products')
+              }
+
+              const data = await response.json()
+
+              if (data.docs.length > 0) {
+                setProducts((prevProducts) => [...prevProducts, ...data.docs])
+                setPage(nextPage)
+                setHasMore(products.length + data.docs.length < totalProducts)
+              } else {
+                setHasMore(false)
+              }
+            } catch (error) {
+              console.error('Error loading more products:', error)
+              toast({
+                title: 'Error',
+                description: 'Failed to load more products. Please try again.',
+                variant: 'destructive',
+              })
+            } finally {
+              setIsLoading(false)
+            }
+          }
+
           loadMoreProducts()
         }
       })
 
       if (node) observer.current.observe(node)
     },
-    [isLoading, hasMore, loadMoreProducts],
+    [isLoading, hasMore, page, products.length, categoryId, totalProducts, toast],
   )
 
   // Function to trim description and add ellipsis

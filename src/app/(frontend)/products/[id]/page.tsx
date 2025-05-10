@@ -8,8 +8,8 @@ import { Product } from '@/payload-types'
 // Import the new client component we will create
 import ProductDetailsClient from '@/components/ProductDetailsClient'
 
-// Restore revalidate if needed, or keep it removed for on-demand
-// export const revalidate = 60
+// Set revalidation to 1 hour (3600 seconds)
+export const revalidate = 3600
 
 type Props = {
   params: Promise<{ id: string }>

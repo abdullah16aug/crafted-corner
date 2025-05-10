@@ -5,7 +5,7 @@ import config from '@payload-config'
 import { Category } from '@/payload-types'
 import ProductsClient from '@/components/products/ProductsClient'
 
-export const revalidate = 3600 // Revalidate every minute
+export const revalidate = 3600 // Revalidate every hour
 
 interface PageProps {
   params: Promise<{ id: string }>
