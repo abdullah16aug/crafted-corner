@@ -1,3 +1,4 @@
+import { admins } from '@/access/admins'
 import type { CollectionConfig } from 'payload'
 
 export const Pages: CollectionConfig = {
@@ -8,9 +9,9 @@ export const Pages: CollectionConfig = {
   },
   access: {
     read: () => true,
-    create: () => true,
-    update: () => true,
-    delete: () => true,
+    create: admins,
+    update: admins,
+    delete: admins,
   },
   fields: [
     {
