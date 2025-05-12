@@ -1,0 +1,12 @@
+# Copy the following content to your .env.example file
+
+# Brevo (SendinBlue) Email API
+BREVO_API_KEY=your_brevo_api_key_here
+
+# The API key can be found in your Brevo account:
+# 1. Log in to Brevo at https://app.brevo.com
+# 2. Go to Settings → API Keys & Webhooks
+# 3. Copy your API key or create a new one
+
+# For production, replace with your actual API key in .env.local
+# but NEVER commit the actual API key to version control 

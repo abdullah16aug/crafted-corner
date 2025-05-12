@@ -132,7 +132,7 @@ export interface UserAuthOperations {
 export interface User {
   id: string;
   name?: string | null;
-  role?: ('admin' | 'user') | null;
+  role: ('admin' | 'user')[];
   phone?: string | null;
   address?: string | null;
   city?: string | null;
@@ -274,6 +274,10 @@ export interface Order {
   };
   items: {
     product: string | Product;
+    /**
+     * Product name at time of order
+     */
+    productName?: string | null;
     quantity: number;
     price: number;
     id?: string | null;
@@ -580,6 +584,7 @@ export interface OrdersSelect<T extends boolean = true> {
     | T
     | {
         product?: T;
+        productName?: T;
         quantity?: T;
         price?: T;
         id?: T;

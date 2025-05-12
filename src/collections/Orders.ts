@@ -111,6 +111,13 @@ const Orders: CollectionConfig = {
           required: true,
         },
         {
+          name: 'productName',
+          type: 'text',
+          admin: {
+            description: 'Product name at time of order',
+          },
+        },
+        {
           name: 'quantity',
           type: 'number',
           required: true,

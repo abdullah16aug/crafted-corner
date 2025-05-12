@@ -16,7 +16,6 @@ const Products: CollectionConfig = {
     {
       name: 'description',
       type: 'textarea',
-      required: true,
     },
     {
       name: 'featured',
@@ -56,14 +55,11 @@ const Products: CollectionConfig = {
     {
       name: 'images',
       type: 'array',
-      required: true,
-      minRows: 1,
       fields: [
         {
           name: 'image',
           type: 'upload',
           relationTo: 'media',
-          required: true,
         },
       ],
     },
@@ -71,18 +67,15 @@ const Products: CollectionConfig = {
       name: 'category',
       type: 'relationship',
       relationTo: 'categories',
-      required: true,
     },
     {
       name: 'sku',
       type: 'text',
-      required: true,
       unique: true,
     },
     {
       name: 'inventory',
       type: 'number',
-      required: true,
       min: 0,
       defaultValue: 0,
     },
@@ -100,7 +93,6 @@ const Products: CollectionConfig = {
         },
       ],
       defaultValue: 'draft',
-      required: true,
     },
   ],
 }

@@ -59,12 +59,25 @@ export default function CheckoutClient() {
 
   const createOrder = async () => {
     try {
+      // Log original items to debug
+      console.log(
+        'Original cart items:',
+        items.map((item) => ({
+          productId: item.product.id,
+          productName: item.product.name,
+          quantity: item.quantity,
+        })),
+      )
+
       // Prepare order items
       const orderItems = items.map((item) => ({
-        product: item.product.id,
+        product: item.product.id, // Make sure this is just the ID string
         quantity: item.quantity,
         price: item.product.discountedPrice ?? item.product.price,
+        productName: item.product.name, // Add product name for reference
       }))
+
+      console.log('Order items:', JSON.stringify(orderItems, null, 2))
 
       // Prepare shipping address
       const shippingAddress = {
@@ -93,6 +106,8 @@ export default function CheckoutClient() {
         guestInfo,
       }
 
+      console.log('Sending order data:', JSON.stringify(orderData, null, 2))
+
       // Submit to API
       const response = await fetch('/api/orders', {
         method: 'POST',
@@ -102,12 +117,14 @@ export default function CheckoutClient() {
         body: JSON.stringify(orderData),
       })
 
+      const responseData = await response.json()
+
       if (!response.ok) {
-        throw new Error('Failed to create order')
+        console.error('Order API error:', responseData)
+        throw new Error(responseData.details || responseData.error || 'Failed to create order')
       }
 
-      const result = await response.json()
-      return result.doc.orderNumber
+      return responseData.doc.orderNumber
     } catch (error) {
       console.error('Error creating order:', error)
       throw error
@@ -124,6 +141,37 @@ export default function CheckoutClient() {
 
       // Set the order number for confirmation
       setOrderNumber(newOrderNumber)
+
+      // Store order details in localStorage to persist between sessions
+      const orderDetails = {
+        orderNumber: newOrderNumber,
+        date: new Date().toISOString(),
+        customerName: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        phone: formData.phone,
+        items: items.map((item) => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.product.discountedPrice ?? item.product.price,
+        })),
+        totalAmount: total,
+        shippingAddress: {
+          street: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.pincode,
+          country: 'India',
+        },
+      }
+
+      // Get existing orders from localStorage or initialize an empty array
+      const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]')
+
+      // Add the new order to the beginning of the array
+      existingOrders.unshift(orderDetails)
+
+      // Store updated orders array in localStorage
+      localStorage.setItem('orders', JSON.stringify(existingOrders))
 
       // Clear the cart
       clearCart()
