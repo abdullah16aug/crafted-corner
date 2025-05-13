@@ -10,6 +10,11 @@ import config from '@/payload.config'
 export const metadata = {
   description: 'Krafted Korner - Handmade crafts and unique items',
   title: 'Krafted Korner',
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
 }
 
 export default async function RootLayout(props: { children: React.ReactNode }) {
@@ -109,6 +114,9 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
 
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.png" />
+      </head>
       <body>
         <Navbar />
         <main className="min-h-screen">{children}</main>

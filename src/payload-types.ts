@@ -219,7 +219,7 @@ export interface Media {
 export interface Product {
   id: string;
   name: string;
-  description: string;
+  description?: string | null;
   /**
    * Show this product on the home page as a featured product
    */
@@ -229,14 +229,16 @@ export interface Product {
    * Enter a price here to put the product on sale. Leave blank for no discount.
    */
   discountedPrice?: number | null;
-  images: {
-    image: string | Media;
-    id?: string | null;
-  }[];
-  category: string | Category;
-  sku: string;
-  inventory: number;
-  status: 'draft' | 'published';
+  images?:
+    | {
+        image?: (string | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
+  category?: (string | null) | Category;
+  sku?: string | null;
+  inventory?: number | null;
+  status?: ('draft' | 'published') | null;
   updatedAt: string;
   createdAt: string;
 }
