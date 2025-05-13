@@ -95,7 +95,7 @@ export default function Footer({ siteSettings }: FooterProps) {
                   rel="noopener noreferrer"
                   className="hover:text-amber-700 transition-colors"
                 >
-                  WhatsApp
+                  {contactInfo.whatsapp}
                 </a>
               </div>
             )}
