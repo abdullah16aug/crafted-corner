@@ -5,7 +5,6 @@ import CheckoutClient from '@/components/checkout/CheckoutClient'
 
 // Force dynamic rendering to avoid prerendering issues with client components
 export const dynamic = 'force-dynamic'
-export const revalidate = 0
 
 export default function CheckoutPage() {
   return <CheckoutClient />

@@ -17,6 +17,7 @@ export default function CheckoutClient() {
   const items = useCartStore((state) => state.items)
   const clearCart = useCartStore((state) => state.clearCart)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [orderNumber, setOrderNumber] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     firstName: '',
@@ -31,6 +32,9 @@ export default function CheckoutClient() {
   })
 
   useEffect(() => {
+    // Set loading to false after initial mount
+    setIsLoading(false)
+
     // Redirect to cart if there are no items
     if (items.length === 0 && !orderNumber) {
       router.push('/cart')
@@ -191,19 +195,25 @@ export default function CheckoutClient() {
     }
   }
 
-  // If we have an order number, show a success screen
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-12 flex justify-center items-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-amber-700" />
+      </div>
+    )
+  }
+
+  // If we have an order number, show success screen
   if (orderNumber) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
           <h1 className="text-2xl font-serif font-bold text-amber-900 mb-4">Order Confirmed!</h1>
           <p className="text-lg mb-2">Thank you for your order.</p>
-          <p className="text-amber-800 font-medium text-xl mb-6">Order #{orderNumber}</p>
-          <p className="text-stone-600 mb-8">
-            We&apos;ve sent a confirmation email to {formData.email} with your order details.
-          </p>
+          <p className="text-stone-600 mb-6">Your order number is: {orderNumber}</p>
           <Link href="/">
-            <Button className="bg-amber-700 hover:bg-amber-800">Continue Shopping</Button>
+            <Button className="bg-amber-700 hover:bg-amber-800">Return to Home</Button>
           </Link>
         </div>
       </div>

@@ -7,7 +7,7 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import { s3Storage } from '@payloadcms/storage-s3'
-
+import { resendAdapter } from '@payloadcms/email-resend'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import Products from './collections/Products'
@@ -20,6 +20,11 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  email: resendAdapter({
+    defaultFromAddress: 'noreply@kraftedkorner.com',
+    defaultFromName: 'Krafted Korner',
+    apiKey: process.env.RESEND_API_KEY || '',
+  }),
   admin: {
     user: Users.slug,
     importMap: {
