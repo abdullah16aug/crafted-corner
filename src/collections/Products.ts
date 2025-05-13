@@ -16,6 +16,7 @@ const Products: CollectionConfig = {
     {
       name: 'name',
       type: 'text',
+      index: true,
       required: true,
     },
     {

@@ -7,6 +7,7 @@ import WhatsAppButton from '@/components/WhatsAppButton'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { Analytics } from '@vercel/analytics/next'
+import SearchBar from '@/components/SearchBar'
 
 export const metadata = {
   description: 'Krafted Korner - Handmade crafts and unique items',
@@ -120,6 +121,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
       </head>
       <body>
         <Navbar />
+        <SearchBar />
         <main className="min-h-screen">{children}</main>
         <Footer siteSettings={siteSettings} />
         <WhatsAppButton
