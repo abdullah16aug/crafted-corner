@@ -44,9 +44,11 @@ const Orders: CollectionConfig = {
                   <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                     <h2 style="color: #444; margin-bottom: 15px;">Order Details</h2>
                     <p style="margin: 10px 0;"><strong>Order Number:</strong> ${orderNumber}</p>
-                    <p style="margin: 10px 0;"><strong>Items:</strong> ${items.map((item: any) => {
-                      return `<p style="margin: 5px 0;">${item.product.name} x ${item.quantity} ${item.product.discountedPrice ? `(₹${item.product.discountedPrice})` : `(₹${item.product.price})`} </p>`
-                    }).join('')}
+                    <p style="margin: 10px 0;"><strong>Items:</strong> ${items
+                      .map((item: any) => {
+                        return `<p style="margin: 5px 0;">${item.product.name} x ${item.quantity} ${item.product.discountedPrice ? `(₹${item.product.discountedPrice})` : `(₹${item.product.price})`} </p>`
+                      })
+                      .join('')}
                     </p>
                     <p style="margin: 10px 0;"><strong>Total Amount:</strong> ₹${totalAmount}</p>
                     <p style="margin: 10px 0;"><strong>Payment Method:</strong> ${paymentMethod}</p>
@@ -283,6 +285,11 @@ const Orders: CollectionConfig = {
       ],
       defaultValue: 'pending',
       required: true,
+    },
+    {
+      name: 'amount',
+      type: 'number',
+      min: 0,
     },
     {
       name: 'shippingAddress',

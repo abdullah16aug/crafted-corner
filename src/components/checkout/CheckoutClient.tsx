@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Media } from '@/payload-types'
 import { Loader2 } from 'lucide-react'
+import RazorpayCheckout from './RazorpayCheckout'
 
 export default function CheckoutClient() {
   const router = useRouter()
@@ -104,8 +105,8 @@ export default function CheckoutClient() {
         items: orderItems,
         totalAmount: total,
         paymentMethod: formData.paymentMethod,
-        isPaid: false, // COD is not paid initially
-        status: 'pending',
+        isPaid: formData.paymentMethod === 'razorpay', // Razorpay payment will be verified separately
+        status: formData.paymentMethod === 'razorpay' ? 'processing' : 'pending',
         shippingAddress,
         guestInfo,
       }
@@ -140,59 +141,88 @@ export default function CheckoutClient() {
     setIsSubmitting(true)
 
     try {
-      // Create the order in the backend
-      const newOrderNumber = await createOrder()
+      // For COD, create and process order
+      if (formData.paymentMethod === 'cod') {
+        // Create the order in the backend
+        const newOrderNumber = await createOrder()
 
-      // Set the order number for confirmation
-      setOrderNumber(newOrderNumber)
+        // Set the order number for confirmation
+        setOrderNumber(newOrderNumber)
 
-      // Store order details in localStorage to persist between sessions
-      const orderDetails = {
-        orderNumber: newOrderNumber,
-        date: new Date().toISOString(),
-        customerName: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        phone: formData.phone,
-        items: items.map((item) => ({
-          name: item.product.name,
-          quantity: item.quantity,
-          price: item.product.discountedPrice ?? item.product.price,
-        })),
-        totalAmount: total,
-        shippingAddress: {
-          street: formData.address,
-          city: formData.city,
-          state: formData.state,
-          zipCode: formData.pincode,
-          country: 'India',
-        },
+        // Store order details in localStorage to persist between sessions
+        const orderDetails = {
+          orderNumber: newOrderNumber,
+          date: new Date().toISOString(),
+          customerName: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          phone: formData.phone,
+          items: items.map((item) => ({
+            name: item.product.name,
+            quantity: item.quantity,
+            price: item.product.discountedPrice ?? item.product.price,
+          })),
+          totalAmount: total,
+          shippingAddress: {
+            street: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zipCode: formData.pincode,
+            country: 'India',
+          },
+        }
+
+        // Get existing orders from localStorage or initialize an empty array
+        const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]')
+
+        // Add the new order to the beginning of the array
+        existingOrders.unshift(orderDetails)
+
+        // Store updated orders array in localStorage
+        localStorage.setItem('orders', JSON.stringify(existingOrders))
+
+        // Clear the cart
+        clearCart()
+
+        // Show success message with order number
+        alert(`Order placed successfully! Your order number is ${newOrderNumber}`)
+
+        // Redirect to homepage after a delay
+        setTimeout(() => {
+          router.push('/')
+        }, 1500)
       }
-
-      // Get existing orders from localStorage or initialize an empty array
-      const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]')
-
-      // Add the new order to the beginning of the array
-      existingOrders.unshift(orderDetails)
-
-      // Store updated orders array in localStorage
-      localStorage.setItem('orders', JSON.stringify(existingOrders))
-
-      // Clear the cart
-      clearCart()
-
-      // Show success message with order number
-      alert(`Order placed successfully! Your order number is ${newOrderNumber}`)
-
-      // Redirect to homepage after a delay
-      setTimeout(() => {
-        router.push('/')
-      }, 1500)
+      // For Razorpay, handleRazorpaySuccess will handle the order creation after payment
     } catch (error) {
       console.error('Order processing failed', error)
       alert('There was an error processing your order. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const handleRazorpaySuccess = async (paymentData: any) => {
+    try {
+      // With webhooks, the order creation is handled by the server
+      // We can display a success message right away
+      setOrderNumber(`Payment ID: ${paymentData.paymentId}`)
+
+      // Show a message explaining that the order is being processed
+      console.log('Payment successful! Your order is being processed.')
+
+      // Clear the cart
+      clearCart()
+    } catch (error) {
+      console.error('Error after payment:', error)
+      alert(
+        'Your payment was successful, but we encountered an issue processing your order. Our team will contact you shortly.',
+      )
+    }
+  }
+
+  const handleRazorpayError = (error: any) => {
+    console.error('Razorpay payment failed:', error)
+    alert('Payment failed. Please try again or choose another payment method.')
+    setIsSubmitting(false)
   }
 
   // Show loading state
@@ -206,12 +236,26 @@ export default function CheckoutClient() {
 
   // If we have an order number, show success screen
   if (orderNumber) {
+    // Check if it's a Razorpay payment ID
+    const isRazorpayPayment = orderNumber.startsWith('Payment ID:')
+
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
           <h1 className="text-2xl font-serif font-bold text-amber-900 mb-4">Order Confirmed!</h1>
           <p className="text-lg mb-2">Thank you for your order.</p>
-          <p className="text-stone-600 mb-6">Your order number is: {orderNumber}</p>
+
+          {isRazorpayPayment ? (
+            <>
+              <p className="text-stone-600 mb-2">{orderNumber}</p>
+              <p className="text-stone-600 mb-6">
+                Your payment was successful. Your order will be processed shortly.
+              </p>
+            </>
+          ) : (
+            <p className="text-stone-600 mb-6">Your order number is: {orderNumber}</p>
+          )}
+
           <Link href="/">
             <Button className="bg-amber-700 hover:bg-amber-800">Return to Home</Button>
           </Link>
@@ -227,7 +271,12 @@ export default function CheckoutClient() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Order Form */}
         <div className="lg:col-span-2">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-6"
+            autoComplete="on"
+            name="checkout-form"
+          >
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <h2 className="text-xl font-semibold text-stone-800 mb-4">Contact Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -240,6 +289,7 @@ export default function CheckoutClient() {
                     onChange={handleChange}
                     required
                     placeholder="Enter your first name"
+                    autoComplete="given-name"
                   />
                 </div>
                 <div className="space-y-2">
@@ -251,6 +301,7 @@ export default function CheckoutClient() {
                     onChange={handleChange}
                     required
                     placeholder="Enter your last name"
+                    autoComplete="family-name"
                   />
                 </div>
                 <div className="space-y-2">
@@ -263,6 +314,7 @@ export default function CheckoutClient() {
                     onChange={handleChange}
                     required
                     placeholder="Enter your email address"
+                    autoComplete="email"
                   />
                 </div>
                 <div className="space-y-2">
@@ -275,6 +327,7 @@ export default function CheckoutClient() {
                     onChange={handleChange}
                     required
                     placeholder="Enter your phone number"
+                    autoComplete="tel"
                   />
                 </div>
               </div>
@@ -292,6 +345,7 @@ export default function CheckoutClient() {
                     onChange={handleChange}
                     required
                     placeholder="Enter your street address"
+                    autoComplete="street-address"
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -304,6 +358,7 @@ export default function CheckoutClient() {
                       onChange={handleChange}
                       required
                       placeholder="Enter your city"
+                      autoComplete="address-level2"
                     />
                   </div>
                   <div className="space-y-2">
@@ -315,6 +370,7 @@ export default function CheckoutClient() {
                       onChange={handleChange}
                       required
                       placeholder="Enter your state"
+                      autoComplete="address-level1"
                     />
                   </div>
                   <div className="space-y-2">
@@ -326,6 +382,7 @@ export default function CheckoutClient() {
                       onChange={handleChange}
                       required
                       placeholder="Enter 6-digit pincode"
+                      autoComplete="postal-code"
                     />
                   </div>
                 </div>
@@ -346,35 +403,68 @@ export default function CheckoutClient() {
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="razorpay" id="razorpay" disabled />
-                  <Label htmlFor="razorpay" className="cursor-pointer text-gray-500">
-                    Online Payment (Coming Soon)
+                  <RadioGroupItem value="razorpay" id="razorpay" />
+                  <Label htmlFor="razorpay" className="cursor-pointer">
+                    Pay Online (Razorpay)
                   </Label>
                 </div>
               </RadioGroup>
+
+              {formData.paymentMethod === 'razorpay' && (
+                <div className="mt-4">
+                  <RazorpayCheckout
+                    orderDetails={{
+                      amount: total,
+                      customerName: `${formData.firstName} ${formData.lastName}`,
+                      email: formData.email,
+                      phone: formData.phone,
+                      items: items.map((item) => ({
+                        id: item.product.id,
+                        name: item.product.name,
+                        quantity: item.quantity,
+                        price: item.product.discountedPrice ?? item.product.price,
+                      })),
+                    }}
+                    onSuccess={handleRazorpaySuccess}
+                    onError={handleRazorpayError}
+                  />
+                </div>
+              )}
             </div>
 
-            <div className="flex justify-between mt-8">
-              <Link href="/cart">
-                <Button variant="outline" type="button">
-                  Return to Cart
+            {formData.paymentMethod === 'cod' && (
+              <div className="flex justify-between mt-8">
+                <Link href="/cart">
+                  <Button variant="outline" type="button">
+                    Return to Cart
+                  </Button>
+                </Link>
+                <Button
+                  type="submit"
+                  className="bg-amber-700 hover:bg-amber-800"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Place Order'
+                  )}
                 </Button>
-              </Link>
-              <Button
-                type="submit"
-                className="bg-amber-700 hover:bg-amber-800"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  'Place Order'
-                )}
-              </Button>
-            </div>
+              </div>
+            )}
+
+            {formData.paymentMethod === 'razorpay' && (
+              <div className="flex justify-start mt-8">
+                <Link href="/cart">
+                  <Button variant="outline" type="button">
+                    Return to Cart
+                  </Button>
+                </Link>
+              </div>
+            )}
           </form>
         </div>
 
