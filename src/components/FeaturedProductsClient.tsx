@@ -29,7 +29,7 @@ export default function FeaturedProductsClient({ products }: FeaturedProductsCli
         description: `${product.name} is already in your cart.`,
         className: 'bg-yellow-100 border-yellow-200 text-yellow-800',
       })
-    } else if (product.inventory > 0) {
+    } else if (product.inventory != null && product.inventory > 0) {
       addItemToCart(product)
       toast({
         title: 'Added to cart!',
@@ -98,9 +98,11 @@ export default function FeaturedProductsClient({ products }: FeaturedProductsCli
                   size="sm"
                   className="w-full text-xs bg-amber-700 hover:bg-amber-800 text-white hover:text-white border-amber-700 hover:border-amber-800"
                   onClick={(e) => handleAddToCart(e, product)}
-                  disabled={product.inventory <= 0}
+                  disabled={product.inventory == null || product.inventory <= 0}
                 >
-                  {product.inventory > 0 ? 'Add to Cart' : 'Out of Stock'}
+                  {product.inventory != null && product.inventory > 0
+                    ? 'Add to Cart'
+                    : 'Out of Stock'}
                 </Button>
               </div>
             </div>

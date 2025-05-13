@@ -79,7 +79,7 @@ export default function ProductsClient({
   )
 
   // Function to trim description and add ellipsis
-  const trimDescription = (description: string | undefined, maxLength: number = 60) => {
+  const trimDescription = (description: string | null | undefined, maxLength: number = 60) => {
     if (!description) return ''
     return description.length > maxLength
       ? `${description.substring(0, maxLength).trim()}...`

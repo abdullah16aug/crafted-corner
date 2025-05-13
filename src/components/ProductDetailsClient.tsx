@@ -79,7 +79,10 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
         <div className="md:w-1/2 p-6 md:p-8">
           <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
           <p className="text-gray-500 mb-4">
-            Category: {typeof product.category === 'object' ? product.category.name : 'Unknown'}
+            Category:{' '}
+            {product.category && typeof product.category === 'object'
+              ? product.category.name
+              : 'Unknown'}
           </p>
 
           {/* Price Display */}
@@ -114,19 +117,19 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
 
           <div className="mb-6">
             <span
-              className={`inline-block px-3 py-1 text-sm font-semibold ${product.inventory > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} rounded-full`}
+              className={`inline-block px-3 py-1 text-sm font-semibold ${product.inventory != null && product.inventory > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} rounded-full`}
             >
-              {product.inventory > 0 ? 'In Stock' : 'Out of Stock'}
+              {product.inventory != null && product.inventory > 0 ? 'In Stock' : 'Out of Stock'}
             </span>
           </div>
 
           {/* Add to Cart Button */}
           <button
             onClick={handleAddToCart}
-            className={`w-full bg-amber-700 hover:bg-amber-800 text-white font-bold py-3 px-4 rounded ${product.inventory <= 0 && 'opacity-50 cursor-not-allowed'}`}
-            disabled={product.inventory <= 0}
+            className={`w-full bg-amber-700 hover:bg-amber-800 text-white font-bold py-3 px-4 rounded ${product.inventory == null || product.inventory <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={product.inventory == null || product.inventory <= 0}
           >
-            {product.inventory > 0 ? 'Add to Cart' : 'Out of Stock'}
+            {product.inventory != null && product.inventory > 0 ? 'Add to Cart' : 'Out of Stock'}
           </button>
         </div>
       </div>
