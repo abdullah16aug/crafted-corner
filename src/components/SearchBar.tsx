@@ -164,7 +164,6 @@ const SearchBar = () => {
                           <p className="text-sm text-amber-700">
                             ₹{product.price?.toFixed(2) || 'N/A'}
                           </p>
-                          <p className="text-xs text-stone-400">ID: {product.id}</p>
                         </div>
                       </Link>
                     </li>
