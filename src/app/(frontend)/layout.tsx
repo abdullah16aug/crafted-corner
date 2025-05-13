@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster'
 import WhatsAppButton from '@/components/WhatsAppButton'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { Analytics } from '@vercel/analytics/next'
 
 export const metadata = {
   description: 'Krafted Korner - Handmade crafts and unique items',
@@ -126,6 +127,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
           message="Hi! I'm interested in your products."
         />
         <Toaster />
+        <Analytics />
       </body>
     </html>
   )
