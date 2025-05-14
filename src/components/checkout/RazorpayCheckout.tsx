@@ -4,6 +4,7 @@ import React, { useEffect } from 'react'
 import Script from 'next/script'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { OrderItem, RazorpaySuccessData, RazorpayErrorResponse } from './types'
 
 interface RazorpayCheckoutProps {
   orderDetails: {
@@ -11,15 +12,15 @@ interface RazorpayCheckoutProps {
     customerName: string
     email: string
     phone: string
-    items: Array<any>
+    items: OrderItem[]
   }
-  onSuccess: (paymentData: any) => void
-  onError: (error: any) => void
+  onSuccess: (paymentData: RazorpaySuccessData) => void
+  onError: (error: Error) => void
 }
 
 declare global {
   interface Window {
-    Razorpay: any
+    Razorpay: any // This one is hard to type fully
   }
 }
 
@@ -184,9 +185,9 @@ export default function RazorpayCheckout({
 
       // 6. Open Razorpay payment form
       razorpay.open()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Razorpay payment error:', error)
-      onError(error)
+      onError(error instanceof Error ? error : new Error(String(error)))
     } finally {
       setIsLoading(false)
     }

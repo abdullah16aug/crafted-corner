@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       order: response,
       key_id: razorpayConfig.key_id,
     })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Razorpay API error:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to create Razorpay order' },

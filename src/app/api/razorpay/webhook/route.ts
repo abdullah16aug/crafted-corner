@@ -4,11 +4,37 @@ import crypto from 'crypto'
 // Replace with your Razorpay webhook secret
 const webhookSecret = process.env.rzp_secret || '' // Use your Razorpay key_secret for signing
 
+interface RazorpayPayment {
+  id: string
+  order_id: string
+  amount: number
+  currency: string
+  status: string
+  method?: string
+  error_code?: string
+  error_description?: string
+  notes?: {
+    orderNumber?: string
+    payloadOrderId?: string
+    [key: string]: string | undefined
+  }
+  fee?: number
+  tax?: number
+}
+
 interface OrderItem {
   id: string
   name: string
   quantity: number
   price: number
+}
+
+// Create interface for webhook payload
+interface WebhookPayload {
+  payment: {
+    entity: RazorpayPayment
+  }
+  // Add other potential properties as needed
 }
 
 export async function POST(request: Request) {
@@ -64,7 +90,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Razorpay webhook error:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to process webhook' },
@@ -73,9 +99,9 @@ export async function POST(request: Request) {
   }
 }
 
-async function handlePaymentAuthorized(payload: any) {
+async function handlePaymentAuthorized(payload: WebhookPayload) {
   // Payment has been authorized but not yet captured
-  const payment = payload.payment.entity
+  const payment = payload.payment.entity as RazorpayPayment
   const razorpayOrderId = payment.order_id
 
   console.log('Payment authorized:', payment.id, 'for order:', razorpayOrderId)
@@ -134,9 +160,9 @@ async function handlePaymentAuthorized(payload: any) {
   }
 }
 
-async function handlePaymentFailed(payload: any) {
+async function handlePaymentFailed(payload: WebhookPayload) {
   // Payment has failed
-  const payment = payload.payment.entity
+  const payment = payload.payment.entity as RazorpayPayment
   const razorpayOrderId = payment.order_id
   console.log('Payment failed:', payment.id, 'for order:', razorpayOrderId)
 
@@ -183,9 +209,9 @@ async function handlePaymentFailed(payload: any) {
   }
 }
 
-async function handlePaymentCaptured(payload: any) {
+async function handlePaymentCaptured(payload: WebhookPayload) {
   // Payment has been captured (fully completed)
-  const payment = payload.payment.entity
+  const payment = payload.payment.entity as RazorpayPayment
   const razorpayOrderId = payment.order_id
   console.log('Payment captured:', payment.id, 'for order:', razorpayOrderId)
 

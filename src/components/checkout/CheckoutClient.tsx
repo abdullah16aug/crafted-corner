@@ -13,6 +13,15 @@ import { Media } from '@/payload-types'
 import { Loader2 } from 'lucide-react'
 import RazorpayCheckout from './RazorpayCheckout'
 
+// Create an interface here instead of importing it
+interface RazorpaySuccessData {
+  orderId: string
+  paymentId: string
+  signature: string
+  payloadOrderId?: string
+  orderNumber?: string
+}
+
 export default function CheckoutClient() {
   const router = useRouter()
   const items = useCartStore((state) => state.items)
@@ -200,11 +209,11 @@ export default function CheckoutClient() {
     }
   }
 
-  const handleRazorpaySuccess = async (paymentData: any) => {
+  const handleRazorpaySuccess = async (paymentData: RazorpaySuccessData) => {
     try {
       // With webhooks, the order creation is already done, and the order will be updated
       // We can display a success message right away with the real order number
-      setOrderNumber(paymentData.orderNumber)
+      setOrderNumber(paymentData.orderNumber || `Order-${paymentData.paymentId}`)
 
       // Store payment info in localStorage for reference
       const paymentInfo = {
@@ -233,7 +242,7 @@ export default function CheckoutClient() {
     }
   }
 
-  const handleRazorpayError = (error: any) => {
+  const handleRazorpayError = (error: Error) => {
     console.error('Razorpay payment failed:', error)
     alert('Payment failed. Please try again or choose another payment method.')
     setIsSubmitting(false)
@@ -257,7 +266,7 @@ export default function CheckoutClient() {
           <p className="text-lg mb-2">Thank you for your order.</p>
           <p className="text-stone-600 mb-6">Your order number is: {orderNumber}</p>
           <p className="text-sm text-stone-500 mb-6">
-            We've sent a confirmation email with your order details. Your order is being processed
+            We have sent a confirmation email with your order details. Your order is being processed
             and you will receive updates via email.
           </p>
           <Link href="/">
