@@ -36,59 +36,59 @@ export default function RazorpayCheckout({
     setIsLoading(true)
 
     try {
-      // Store order details before payment for webhook to reference later
-      const storeOrderDetails = async () => {
-        try {
-          // Store customer and order details temporarily
-          // This will be referenced by webhook when payment is complete
-          const tempOrderResponse = await fetch('/api/razorpay/store-order-details', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              orderDetails: {
-                amount: orderDetails.amount,
-                items: orderDetails.items,
-                customerInfo: {
-                  name: orderDetails.customerName,
-                  email: orderDetails.email,
-                  phone: orderDetails.phone,
-                },
-                shippingAddress: {
-                  street:
-                    (document.querySelector('[name="address"]') as HTMLInputElement)?.value ||
-                    'To be updated',
-                  city:
-                    (document.querySelector('[name="city"]') as HTMLInputElement)?.value ||
-                    'To be updated',
-                  state:
-                    (document.querySelector('[name="state"]') as HTMLInputElement)?.value ||
-                    'To be updated',
-                  zipCode:
-                    (document.querySelector('[name="pincode"]') as HTMLInputElement)?.value ||
-                    'To be updated',
-                  country: 'India',
-                },
-              },
-            }),
-          })
-
-          return await tempOrderResponse.json()
-        } catch (error) {
-          console.error('Failed to store order details:', error)
-          throw error
-        }
+      // Get shipping address from form fields
+      const shippingAddress = {
+        street:
+          (document.querySelector('[name="address"]') as HTMLInputElement)?.value ||
+          'To be updated',
+        city:
+          (document.querySelector('[name="city"]') as HTMLInputElement)?.value || 'To be updated',
+        state:
+          (document.querySelector('[name="state"]') as HTMLInputElement)?.value || 'To be updated',
+        zipCode:
+          (document.querySelector('[name="pincode"]') as HTMLInputElement)?.value ||
+          'To be updated',
+        country: 'India',
       }
 
-      // Store order details first
-      const storeResponse = await storeOrderDetails()
+      console.log('Creating order in Payload first...')
 
-      if (!storeResponse.success) {
-        throw new Error('Failed to store order details')
+      // 1. First create order in Payload with 'pending' status
+      const orderResponse = await fetch('/api/collections/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: orderDetails.items.map((item) => ({
+            product: item.id,
+            quantity: item.quantity,
+            price: item.price || item.discountedPrice || item.product?.price,
+            productName: item.name || item.product?.name,
+          })),
+          totalAmount: orderDetails.amount,
+          paymentMethod: 'razorpay',
+          isPaid: false,
+          status: 'pending',
+          guestInfo: {
+            name: orderDetails.customerName,
+            email: orderDetails.email,
+            phone: orderDetails.phone,
+          },
+          shippingAddress: shippingAddress,
+        }),
+      })
+
+      if (!orderResponse.ok) {
+        const errorText = await orderResponse.text()
+        console.error('Failed to create order in Payload:', errorText)
+        throw new Error('Failed to create initial order')
       }
 
-      // Now create Razorpay order
+      const createdOrder = await orderResponse.json()
+      console.log('Order created in Payload:', createdOrder)
+
+      // 2. Now create Razorpay order
       const response = await fetch('/api/razorpay', {
         method: 'POST',
         headers: {
@@ -99,8 +99,8 @@ export default function RazorpayCheckout({
           customerName: orderDetails.customerName,
           email: orderDetails.email,
           phone: orderDetails.phone,
-          items: orderDetails.items,
-          tempOrderId: storeResponse.tempOrderId,
+          orderNumber: createdOrder.doc.orderNumber,
+          orderId: createdOrder.doc.id,
         }),
       })
 
@@ -110,7 +110,7 @@ export default function RazorpayCheckout({
         throw new Error(data.error || 'Failed to create Razorpay order')
       }
 
-      // Configure Razorpay options
+      // 3. Configure Razorpay options
       const options = {
         key: data.key_id,
         amount: data.order.amount,
@@ -124,7 +124,8 @@ export default function RazorpayCheckout({
           contact: orderDetails.phone,
         },
         notes: {
-          tempOrderId: storeResponse.tempOrderId,
+          orderNumber: createdOrder.doc.orderNumber,
+          payloadOrderId: createdOrder.doc.id,
         },
         theme: {
           color: '#B45309', // amber-700
@@ -138,38 +139,50 @@ export default function RazorpayCheckout({
             orderId: response.razorpay_order_id,
             paymentId: response.razorpay_payment_id,
             signature: response.razorpay_signature,
+            payloadOrderId: createdOrder.doc.id,
+            orderNumber: createdOrder.doc.orderNumber,
           })
         },
       }
 
-      // Initialize Razorpay
+      // 4. Initialize Razorpay
       const razorpay = new window.Razorpay(options)
 
-      // Handle payment failure directly in the client
+      // 5. Handle payment failure directly in the client
       razorpay.on('payment.failed', function (response: any) {
         const error = response.error
         console.error('Payment failed:', error)
+
+        // Update the order status to failed
+        fetch(`/api/collections/orders/${createdOrder.doc.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'cancelled',
+            razorpayDetails: {
+              error_code: error.code,
+              error_description: error.description,
+              error_source: error.source,
+              error_step: error.step,
+              error_reason: error.reason,
+            },
+          }),
+        }).catch((err) => {
+          console.error('Failed to update order status to cancelled:', err)
+        })
 
         // Display meaningful error to customer
         const errorMessage =
           error.description ||
           'Your payment failed. Please try again or use a different payment method.'
 
-        // Log additional details for debugging
-        console.log('Payment failure details:', {
-          code: error.code,
-          description: error.description,
-          source: error.source,
-          step: error.step,
-          reason: error.reason,
-          orderId: response.error.metadata?.order_id,
-          paymentId: response.error.metadata?.payment_id,
-        })
-
         // Pass the error to the parent component
         onError(new Error(errorMessage))
       })
 
+      // 6. Open Razorpay payment form
       razorpay.open()
     } catch (error) {
       console.error('Razorpay payment error:', error)

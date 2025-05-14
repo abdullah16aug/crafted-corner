@@ -2,7 +2,14 @@ import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
 // Replace with your Razorpay webhook secret
-const webhookSecret = 'gnrcASyqYYTUPNlf9ziT6tw9' // Use your Razorpay key_secret for signing
+const webhookSecret = process.env.rzp_secret || '' // Use your Razorpay key_secret for signing
+
+interface OrderItem {
+  id: string
+  name: string
+  quantity: number
+  price: number
+}
 
 export async function POST(request: Request) {
   try {
@@ -69,63 +76,59 @@ export async function POST(request: Request) {
 async function handlePaymentAuthorized(payload: any) {
   // Payment has been authorized but not yet captured
   const payment = payload.payment.entity
-  const orderId = payment.order_id
+  const razorpayOrderId = payment.order_id
 
-  console.log('Payment authorized:', payment.id, 'for order:', orderId)
+  console.log('Payment authorized:', payment.id, 'for order:', razorpayOrderId)
 
-  // Retrieve the tempOrderId from payment notes
-  const tempOrderId = payment.notes?.tempOrderId
+  // Retrieve the Payload order ID from payment notes
+  const payloadOrderId = payment.notes?.payloadOrderId
+  const orderNumber = payment.notes?.orderNumber
 
-  if (!tempOrderId) {
-    console.error('No tempOrderId found in payment', payment.id)
+  if (!payloadOrderId) {
+    console.error('No payloadOrderId found in payment', payment.id)
     return
   }
 
   try {
-    // Retrieve stored order details
-    const orderDetailsResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || ''}/api/razorpay/store-order-details?id=${tempOrderId}`,
-      { method: 'GET' },
-    )
+    console.log(`Updating order ${orderNumber} (ID: ${payloadOrderId}) for payment ${payment.id}`)
 
-    if (!orderDetailsResponse.ok) {
-      throw new Error('Failed to retrieve order details')
-    }
-
-    const { orderDetails } = await orderDetailsResponse.json()
-
-    if (!orderDetails) {
-      throw new Error('Order details not found')
-    }
-
-    // Create order in database
-    const orderResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/orders`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        items: orderDetails.items,
-        totalAmount: orderDetails.amount,
-        paymentMethod: 'razorpay',
-        isPaid: true,
-        status: 'processing',
-        razorpayDetails: {
-          razorpay_id: orderId,
-          payment_id: payment.id,
-          amount_paid: payment.amount,
-          currency: payment.currency,
+    // Update the order in Payload - mark as processing and add payment details
+    try {
+      const updateResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || process.env.VERCEL_URL || ''}/api/collections/orders/${payloadOrderId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'processing',
+            razorpayDetails: {
+              razorpay_id: razorpayOrderId,
+              payment_id: payment.id,
+              amount_paid: payment.amount / 100, // Convert from paise to rupees
+              currency: payment.currency,
+              method: payment.method,
+              status: 'authorized',
+            },
+          }),
         },
-        guestInfo: orderDetails.customerInfo,
-        shippingAddress: orderDetails.shippingAddress,
-      }),
-    })
+      )
 
-    if (!orderResponse.ok) {
-      throw new Error('Failed to create order record')
+      if (!updateResponse.ok) {
+        const errorText = await updateResponse.text()
+        console.error('Failed to update order in Payload:', errorText)
+        throw new Error(`Failed to update order: ${updateResponse.status}`)
+      }
+
+      const updatedOrder = await updateResponse.json()
+      console.log('Order updated successfully:', updatedOrder)
+
+      return updatedOrder
+    } catch (error) {
+      console.error('Error updating order in Payload:', error)
+      throw error
     }
-
-    console.log('Order created successfully for payment:', payment.id)
   } catch (error) {
     console.error('Failed to process order after payment authorization:', error)
   }
@@ -134,55 +137,47 @@ async function handlePaymentAuthorized(payload: any) {
 async function handlePaymentFailed(payload: any) {
   // Payment has failed
   const payment = payload.payment.entity
-  const orderId = payment.order_id
-  console.log('Payment failed:', payment.id, 'for order:', orderId)
+  const razorpayOrderId = payment.order_id
+  console.log('Payment failed:', payment.id, 'for order:', razorpayOrderId)
 
-  // Retrieve the tempOrderId from payment notes if exists
-  const tempOrderId = payment.notes?.tempOrderId
+  // Retrieve the Payload order ID from payment notes
+  const payloadOrderId = payment.notes?.payloadOrderId
+  const orderNumber = payment.notes?.orderNumber
+
+  if (!payloadOrderId) {
+    console.error('No payloadOrderId found in payment', payment.id)
+    return
+  }
 
   try {
-    let customerInfo = { email: 'unknown', name: 'unknown' }
-    let orderItems = []
+    // Update order status to cancelled
+    const updateResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || process.env.VERCEL_URL || ''}/api/collections/orders/${payloadOrderId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'cancelled',
+          razorpayDetails: {
+            razorpay_id: razorpayOrderId,
+            payment_id: payment.id,
+            error_code: payment.error_code,
+            error_description: payment.error_description,
+            status: 'failed',
+          },
+        }),
+      },
+    )
 
-    // Try to retrieve stored order details if tempOrderId exists
-    if (tempOrderId) {
-      try {
-        const orderDetailsResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || ''}/api/razorpay/store-order-details?id=${tempOrderId}`,
-          { method: 'GET' },
-        )
-
-        if (orderDetailsResponse.ok) {
-          const { orderDetails } = await orderDetailsResponse.json()
-          if (orderDetails && orderDetails.customerInfo) {
-            customerInfo = orderDetails.customerInfo
-            orderItems = orderDetails.items || []
-          }
-        }
-      } catch (error) {
-        console.error('Error retrieving order details for failed payment:', error)
-      }
+    if (updateResponse.ok) {
+      console.log(`Order ${orderNumber} marked as cancelled due to failed payment:`, payment.id)
+    } else {
+      const errorText = await updateResponse.text()
+      console.error('Failed to update order status:', errorText)
+      throw new Error('Failed to update order status')
     }
-
-    // Record the failed payment for tracking (you can use your preferred storage method)
-    // Here we'll just log it with more details
-    console.log('Payment failure details:', {
-      paymentId: payment.id,
-      orderId: orderId,
-      amount: payment.amount / 100, // Convert from paise
-      currency: payment.currency,
-      customerEmail: customerInfo.email,
-      customerName: customerInfo.name,
-      errorCode: payment.error_code,
-      errorDescription: payment.error_description,
-      items: orderItems,
-      timestamp: new Date().toISOString(),
-    })
-
-    // For a production app, you might want to:
-    // 1. Send a notification to the customer about the failed payment
-    // 2. Store the failed payment in your database for analysis
-    // 3. Provide a recovery path for the customer to try again
   } catch (error) {
     console.error('Error handling failed payment:', error)
   }
@@ -191,51 +186,54 @@ async function handlePaymentFailed(payload: any) {
 async function handlePaymentCaptured(payload: any) {
   // Payment has been captured (fully completed)
   const payment = payload.payment.entity
-  const orderId = payment.order_id
-  console.log('Payment captured:', payment.id, 'for order:', orderId)
+  const razorpayOrderId = payment.order_id
+  console.log('Payment captured:', payment.id, 'for order:', razorpayOrderId)
+
+  // Retrieve the Payload order ID from payment notes
+  const payloadOrderId = payment.notes?.payloadOrderId
+  const orderNumber = payment.notes?.orderNumber
+
+  if (!payloadOrderId) {
+    console.error('No payloadOrderId found in payment', payment.id)
+    return
+  }
 
   try {
-    // In a complete implementation, you would:
-    // 1. Find the order in your database by Razorpay order ID
-    // 2. Update its status to "paid" or "processing"
-    // 3. Send a confirmation email to the customer
-
-    // Example of how to update order status (pseudo-code based on your API structure)
-    try {
-      // This is just a placeholder - you would need to implement your orders API accordingly
-      const updateResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || ''}/api/orders/update-status`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            razorpayOrderId: orderId,
-            status: 'paid',
-            paymentId: payment.id,
-            isPaid: true,
-            // Add additional payment details if needed
-            amount_paid: payment.amount,
+    // Update order status to paid
+    const updateResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || process.env.VERCEL_URL || ''}/api/collections/orders/${payloadOrderId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'processing',
+          isPaid: true,
+          razorpayDetails: {
+            razorpay_id: razorpayOrderId,
+            payment_id: payment.id,
+            amount_paid: payment.amount / 100, // Convert from paise to rupees
+            currency: payment.currency,
             method: payment.method,
-            captured: true,
+            status: 'captured',
             // You might also want to keep track of fees
             fee: payment.fee,
             tax: payment.tax,
-          }),
-        },
-      )
+          },
+        }),
+      },
+    )
 
-      if (updateResponse.ok) {
-        console.log('Order status updated to paid for payment:', payment.id)
+    if (updateResponse.ok) {
+      console.log(`Order ${orderNumber} marked as paid for payment:`, payment.id)
 
-        // Optionally, send confirmation email here
-        // await sendOrderConfirmationEmail(...)
-      } else {
-        throw new Error('Failed to update order status')
-      }
-    } catch (error) {
-      console.error('Error updating order status:', error)
+      // Optionally, send confirmation email here
+      // await sendOrderConfirmationEmail(...)
+    } else {
+      const errorText = await updateResponse.text()
+      console.error('Failed to update order status:', errorText)
+      throw new Error('Failed to update order status')
     }
   } catch (error) {
     console.error('Error handling captured payment:', error)

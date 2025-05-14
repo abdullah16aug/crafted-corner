@@ -202,19 +202,33 @@ export default function CheckoutClient() {
 
   const handleRazorpaySuccess = async (paymentData: any) => {
     try {
-      // With webhooks, the order creation is handled by the server
-      // We can display a success message right away
-      setOrderNumber(`Payment ID: ${paymentData.paymentId}`)
+      // With webhooks, the order creation is already done, and the order will be updated
+      // We can display a success message right away with the real order number
+      setOrderNumber(paymentData.orderNumber)
+
+      // Store payment info in localStorage for reference
+      const paymentInfo = {
+        paymentId: paymentData.paymentId,
+        orderId: paymentData.orderId,
+        payloadOrderId: paymentData.payloadOrderId,
+        orderNumber: paymentData.orderNumber,
+        timestamp: new Date().toISOString(),
+        amount: total,
+        status: 'processing',
+      }
+
+      // Save to localStorage
+      localStorage.setItem('razorpay_payment_info', JSON.stringify(paymentInfo))
 
       // Show a message explaining that the order is being processed
-      console.log('Payment successful! Your order is being processed.')
+      console.log(`Payment successful! Your order #${paymentData.orderNumber} is being processed.`)
 
       // Clear the cart
       clearCart()
     } catch (error) {
       console.error('Error after payment:', error)
       alert(
-        'Your payment was successful, but we encountered an issue processing your order. Our team will contact you shortly.',
+        'Your payment was successful, but we encountered an issue processing your order. Please note your payment ID and contact our support team if needed.',
       )
     }
   }
@@ -236,26 +250,16 @@ export default function CheckoutClient() {
 
   // If we have an order number, show success screen
   if (orderNumber) {
-    // Check if it's a Razorpay payment ID
-    const isRazorpayPayment = orderNumber.startsWith('Payment ID:')
-
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
           <h1 className="text-2xl font-serif font-bold text-amber-900 mb-4">Order Confirmed!</h1>
           <p className="text-lg mb-2">Thank you for your order.</p>
-
-          {isRazorpayPayment ? (
-            <>
-              <p className="text-stone-600 mb-2">{orderNumber}</p>
-              <p className="text-stone-600 mb-6">
-                Your payment was successful. Your order will be processed shortly.
-              </p>
-            </>
-          ) : (
-            <p className="text-stone-600 mb-6">Your order number is: {orderNumber}</p>
-          )}
-
+          <p className="text-stone-600 mb-6">Your order number is: {orderNumber}</p>
+          <p className="text-sm text-stone-500 mb-6">
+            We've sent a confirmation email with your order details. Your order is being processed
+            and you will receive updates via email.
+          </p>
           <Link href="/">
             <Button className="bg-amber-700 hover:bg-amber-800">Return to Home</Button>
           </Link>
