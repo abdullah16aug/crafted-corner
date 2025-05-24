@@ -262,7 +262,9 @@ export default function CheckoutClient() {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
-          <h1 className="text-2xl font-serif font-bold text-amber-900 mb-4">Order Confirmed!</h1>
+          <h1 className="text-2xl font-serif font-bold text-amber-900 mb-4">
+            Order Confirmed! {orderNumber}
+          </h1>
           <p className="text-lg mb-2">Thank you for your order.</p>
           <p className="text-stone-600 mb-6">Your order number is: {orderNumber}</p>
           <p className="text-sm text-stone-500 mb-6">

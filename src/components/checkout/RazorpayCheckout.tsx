@@ -55,7 +55,7 @@ export default function RazorpayCheckout({
       console.log('Creating order in Payload first...')
 
       // 1. First create order in Payload with 'pending' status
-      const orderResponse = await fetch('/api/collections/orders', {
+      const orderResponse = await fetch('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -155,7 +155,7 @@ export default function RazorpayCheckout({
         console.error('Payment failed:', error)
 
         // Update the order status to failed
-        fetch(`/api/collections/orders/${createdOrder.doc.id}`, {
+        fetch(`/api/orders/${createdOrder.doc.id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',

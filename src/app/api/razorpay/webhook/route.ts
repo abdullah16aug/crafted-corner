@@ -121,7 +121,7 @@ async function handlePaymentAuthorized(payload: WebhookPayload) {
     // Update the order in Payload - mark as processing and add payment details
     try {
       const updateResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || process.env.VERCEL_URL || ''}/api/collections/orders/${payloadOrderId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || process.env.VERCEL_URL || ''}/api/orders/${payloadOrderId}`,
         {
           method: 'PATCH',
           headers: {
@@ -178,7 +178,7 @@ async function handlePaymentFailed(payload: WebhookPayload) {
   try {
     // Update order status to cancelled
     const updateResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || process.env.VERCEL_URL || ''}/api/collections/orders/${payloadOrderId}`,
+      `${process.env.NEXT_PUBLIC_API_URL || process.env.VERCEL_URL || ''}/api/orders/${payloadOrderId}`,
       {
         method: 'PATCH',
         headers: {
@@ -227,7 +227,7 @@ async function handlePaymentCaptured(payload: WebhookPayload) {
   try {
     // Update order status to paid
     const updateResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || process.env.VERCEL_URL || ''}/api/collections/orders/${payloadOrderId}`,
+      `${process.env.NEXT_PUBLIC_API_URL || process.env.VERCEL_URL || ''}/api/orders/${payloadOrderId}`,
       {
         method: 'PATCH',
         headers: {
