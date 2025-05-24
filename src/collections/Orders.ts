@@ -32,44 +32,44 @@ const Orders: CollectionConfig = {
           const { orderNumber, items, totalAmount, paymentMethod, status, shippingAddress } = doc
 
           try {
-            await req.payload.sendEmail({
-              to: email,
-              subject: 'Order Placed - Krafted Korner',
-              from: 'Krafted Korner <care@support.kraftedkorner.com>',
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                  <h1 style="color: #92400e; margin-bottom: 20px;">Order Confirmation</h1>
-                  <p style="font-size: 16px; color: #444; margin-bottom: 20px;">Thank you for your order! Your order has been placed successfully.</p>
+            // await req.payload.sendEmail({
+            //   to: email,
+            //   subject: 'Order Placed - Krafted Korner',
+            //   from: 'Krafted Korner <care@support.kraftedkorner.com>',
+            //   html: `
+            //     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            //       <h1 style="color: #92400e; margin-bottom: 20px;">Order Confirmation</h1>
+            //       <p style="font-size: 16px; color: #444; margin-bottom: 20px;">Thank you for your order! Your order has been placed successfully.</p>
                   
-                  <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                    <h2 style="color: #444; margin-bottom: 15px;">Order Details</h2>
-                    <p style="margin: 10px 0;"><strong>Order Number:</strong> ${orderNumber}</p>
-                    <p style="margin: 10px 0;"><strong>Items:</strong> ${items
-                      .map((item: any) => {
-                        return `<p style="margin: 5px 0;">${item.product.name} x ${item.quantity} ${item.product.discountedPrice ? `(₹${item.product.discountedPrice})` : `(₹${item.product.price})`} </p>`
-                      })
-                      .join('')}
-                    </p>
-                    <p style="margin: 10px 0;"><strong>Total Amount:</strong> ₹${totalAmount}</p>
-                    <p style="margin: 10px 0;"><strong>Payment Method:</strong> ${paymentMethod}</p>
-                    <p style="margin: 10px 0;"><strong>Status:</strong> ${status}</p>
-                  </div>
+            //       <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            //         <h2 style="color: #444; margin-bottom: 15px;">Order Details</h2>
+            //         <p style="margin: 10px 0;"><strong>Order Number:</strong> ${orderNumber}</p>
+            //         <p style="margin: 10px 0;"><strong>Items:</strong> ${items
+            //           .map((item: any) => {
+            //             return `<p style="margin: 5px 0;">${item.product.name} x ${item.quantity} ${item.product.discountedPrice ? `(₹${item.product.discountedPrice})` : `(₹${item.product.price})`} </p>`
+            //           })
+            //           .join('')}
+            //         </p>
+            //         <p style="margin: 10px 0;"><strong>Total Amount:</strong> ₹${totalAmount}</p>
+            //         <p style="margin: 10px 0;"><strong>Payment Method:</strong> ${paymentMethod}</p>
+            //         <p style="margin: 10px 0;"><strong>Status:</strong> ${status}</p>
+            //       </div>
 
-                  <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px;">
-                    <h2 style="color: #444; margin-bottom: 15px;">Shipping Address</h2>
-                    <p style="margin: 5px 0;">${shippingAddress.street}</p>
-                    <p style="margin: 5px 0;">${shippingAddress.city}, ${shippingAddress.state}</p>
-                    <p style="margin: 5px 0;">${shippingAddress.zipCode}</p>
-                    <p style="margin: 5px 0;">${shippingAddress.country}</p>
-                  </div>
+            //       <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px;">
+            //         <h2 style="color: #444; margin-bottom: 15px;">Shipping Address</h2>
+            //         <p style="margin: 5px 0;">${shippingAddress.street}</p>
+            //         <p style="margin: 5px 0;">${shippingAddress.city}, ${shippingAddress.state}</p>
+            //         <p style="margin: 5px 0;">${shippingAddress.zipCode}</p>
+            //         <p style="margin: 5px 0;">${shippingAddress.country}</p>
+            //       </div>
 
-                  <div style="margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
-                    <p>If you have any questions, please contact our support team.</p>
-                    <p>Thank you for shopping with Krafted Korner!</p>
-                  </div>
-                </div>
-              `,
-            })
+            //       <div style="margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
+            //         <p>If you have any questions, please contact our support team.</p>
+            //         <p>Thank you for shopping with Krafted Korner!</p>
+            //       </div>
+            //     </div>
+            //   `,
+            // })
             console.log('Order confirmation email sent successfully to:', email)
           } catch (error) {
             console.error('Error sending order confirmation email:', error)

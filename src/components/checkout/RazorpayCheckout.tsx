@@ -163,11 +163,14 @@ export default function RazorpayCheckout({
           body: JSON.stringify({
             status: 'cancelled',
             razorpayDetails: {
+              razorpay_id: data.order.id,
+              payment_id: error.metadata?.payment_id,
               error_code: error.code,
               error_description: error.description,
               error_source: error.source,
               error_step: error.step,
               error_reason: error.reason,
+              status: 'failed',
             },
           }),
         }).catch((err) => {

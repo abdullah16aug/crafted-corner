@@ -2,7 +2,22 @@ import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
 // Replace with your Razorpay webhook secret
-const webhookSecret = process.env.rzp_secret || '' // Use your Razorpay key_secret for signing
+const webhookSecret = process.env.rzp_secret
+if (!webhookSecret) {
+  throw new Error('RAZORPAY_WEBHOOK_SECRET is not configured in environment variables')
+}
+
+// After validation, we can safely assert the type
+const validatedWebhookSecret: string = webhookSecret
+
+// Utility function to get base API URL
+function getBaseApiUrl(): string {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.VERCEL_URL
+  if (!apiUrl) {
+    throw new Error('API_URL is not configured in environment variables')
+  }
+  return apiUrl.startsWith('http') ? apiUrl : `https://${apiUrl}`
+}
 
 interface RazorpayPayment {
   id: string
@@ -13,6 +28,9 @@ interface RazorpayPayment {
   method?: string
   error_code?: string
   error_description?: string
+  error_source?: string
+  error_step?: string
+  error_reason?: string
   notes?: {
     orderNumber?: string
     payloadOrderId?: string
@@ -55,7 +73,7 @@ export async function POST(request: Request) {
 
     // Verify the signature
     const expectedSignature = crypto
-      .createHmac('sha256', webhookSecret)
+      .createHmac('sha256', validatedWebhookSecret)
       .update(bodyText)
       .digest('hex')
 
@@ -120,26 +138,24 @@ async function handlePaymentAuthorized(payload: WebhookPayload) {
 
     // Update the order in Payload - mark as processing and add payment details
     try {
-      const updateResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || process.env.VERCEL_URL || ''}/api/orders/${payloadOrderId}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            status: 'processing',
-            razorpayDetails: {
-              razorpay_id: razorpayOrderId,
-              payment_id: payment.id,
-              amount_paid: payment.amount / 100, // Convert from paise to rupees
-              currency: payment.currency,
-              method: payment.method,
-              status: 'authorized',
-            },
-          }),
+      const baseUrl = getBaseApiUrl()
+      const updateResponse = await fetch(`${baseUrl}/api/orders/${payloadOrderId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      )
+        body: JSON.stringify({
+          status: 'processing',
+          razorpayDetails: {
+            razorpay_id: razorpayOrderId,
+            payment_id: payment.id,
+            amount_paid: payment.amount / 100, // Convert from paise to rupees
+            currency: payment.currency,
+            method: payment.method,
+            status: 'authorized',
+          },
+        }),
+      })
 
       if (!updateResponse.ok) {
         const errorText = await updateResponse.text()
@@ -177,25 +193,23 @@ async function handlePaymentFailed(payload: WebhookPayload) {
 
   try {
     // Update order status to cancelled
-    const updateResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || process.env.VERCEL_URL || ''}/api/orders/${payloadOrderId}`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: 'cancelled',
-          razorpayDetails: {
-            razorpay_id: razorpayOrderId,
-            payment_id: payment.id,
-            error_code: payment.error_code,
-            error_description: payment.error_description,
-            status: 'failed',
-          },
-        }),
+    const baseUrl = getBaseApiUrl()
+    const updateResponse = await fetch(`${baseUrl}/api/orders/${payloadOrderId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    )
+      body: JSON.stringify({
+        status: 'cancelled',
+        razorpayDetails: {
+          razorpay_id: razorpayOrderId,
+          payment_id: payment.id,
+          error_code: payment.error_code,
+          error_description: payment.error_description,
+          status: 'failed',
+        },
+      }),
+    })
 
     if (updateResponse.ok) {
       console.log(`Order ${orderNumber} marked as cancelled due to failed payment:`, payment.id)
@@ -210,12 +224,9 @@ async function handlePaymentFailed(payload: WebhookPayload) {
 }
 
 async function handlePaymentCaptured(payload: WebhookPayload) {
-  // Payment has been captured (fully completed)
   const payment = payload.payment.entity as RazorpayPayment
   const razorpayOrderId = payment.order_id
-  console.log('Payment captured:', payment.id, 'for order:', razorpayOrderId)
-
-  // Retrieve the Payload order ID from payment notes
+  console.log('payment captured', payment)
   const payloadOrderId = payment.notes?.payloadOrderId
   const orderNumber = payment.notes?.orderNumber
 
@@ -226,36 +237,54 @@ async function handlePaymentCaptured(payload: WebhookPayload) {
 
   try {
     // Update order status to paid
-    const updateResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || process.env.VERCEL_URL || ''}/api/orders/${payloadOrderId}`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: 'processing',
-          isPaid: true,
-          razorpayDetails: {
-            razorpay_id: razorpayOrderId,
-            payment_id: payment.id,
-            amount_paid: payment.amount / 100, // Convert from paise to rupees
-            currency: payment.currency,
-            method: payment.method,
-            status: 'captured',
-            // You might also want to keep track of fees
-            fee: payment.fee,
-            tax: payment.tax,
-          },
-        }),
+    const baseUrl = getBaseApiUrl()
+    const updateResponse = await fetch(`${baseUrl}/api/orders/${payloadOrderId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    )
+      body: JSON.stringify({
+        status: 'processing',
+        isPaid: true,
+        razorpayDetails: {
+          razorpay_id: razorpayOrderId,
+          payment_id: payment.id,
+          amount_paid: payment.amount / 100, // Convert from paise to rupees
+          currency: payment.currency,
+          method: payment.method,
+          status: 'captured',
+          fee: payment.fee,
+          tax: payment.tax,
+        },
+      }),
+    })
 
     if (updateResponse.ok) {
       console.log(`Order ${orderNumber} marked as paid for payment:`, payment.id)
 
-      // Optionally, send confirmation email here
-      // await sendOrderConfirmationEmail(...)
+      // Send order confirmation email only after successful payment
+      try {
+        const emailResponse = await fetch(`${baseUrl}/api/send-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderId: payloadOrderId,
+            orderNumber: orderNumber,
+            type: 'order_confirmation',
+          }),
+        })
+
+        if (emailResponse.ok) {
+          console.log(`Order confirmation email sent for order ${orderNumber}`)
+        } else {
+          console.error('Failed to send order confirmation email:', await emailResponse.text())
+        }
+      } catch (emailError) {
+        console.error('Error sending order confirmation email:', emailError)
+        // Don't throw here - we don't want to affect the order processing if email fails
+      }
     } else {
       const errorText = await updateResponse.text()
       console.error('Failed to update order status:', errorText)
