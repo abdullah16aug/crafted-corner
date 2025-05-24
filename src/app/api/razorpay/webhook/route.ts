@@ -117,7 +117,7 @@ export async function POST(request: Request) {
   }
 }
 
-async function handlePaymentAuthorized(payload: WebhookPayload) {
+async function handlePaymentAuthorized(payload: any) {
   // Payment has been authorized but not yet captured
   const payment = payload.payment.entity as RazorpayPayment
   const razorpayOrderId = payment.order_id
@@ -136,47 +136,30 @@ async function handlePaymentAuthorized(payload: WebhookPayload) {
   try {
     console.log(`Updating order ${orderNumber} (ID: ${payloadOrderId}) for payment ${payment.id}`)
 
-    // Update the order in Payload - mark as processing and add payment details
-    try {
-      const baseUrl = getBaseApiUrl()
-      const updateResponse = await fetch(`${baseUrl}/api/orders/${payloadOrderId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
+    // Update the order using Payload's API
+    const updatedOrder = await payload.update({
+      collection: 'orders',
+      where: { orderNumber: { equals: orderNumber } },
+      data: {
+        status: 'processing',
+        razorpayDetails: {
+          razorpay_id: razorpayOrderId,
+          payment_id: payment.id,
+          amount_paid: payment.amount / 100, // Convert from paise to rupees
+          currency: payment.currency,
+          method: payment.method,
+          status: 'authorized',
         },
-        body: JSON.stringify({
-          status: 'processing',
-          razorpayDetails: {
-            razorpay_id: razorpayOrderId,
-            payment_id: payment.id,
-            amount_paid: payment.amount / 100, // Convert from paise to rupees
-            currency: payment.currency,
-            method: payment.method,
-            status: 'authorized',
-          },
-        }),
-      })
+      },
+    })
 
-      if (!updateResponse.ok) {
-        const errorText = await updateResponse.text()
-        console.error('Failed to update order in Payload:', errorText)
-        throw new Error(`Failed to update order: ${updateResponse.status}`)
-      }
-
-      const updatedOrder = await updateResponse.json()
-      console.log('Order updated successfully:', updatedOrder)
-
-      return updatedOrder
-    } catch (error) {
-      console.error('Error updating order in Payload:', error)
-      throw error
-    }
+    console.log('Order updated successfully:', updatedOrder)
   } catch (error) {
     console.error('Failed to process order after payment authorization:', error)
   }
 }
 
-async function handlePaymentFailed(payload: WebhookPayload) {
+async function handlePaymentFailed(payload: any) {
   // Payment has failed
   const payment = payload.payment.entity as RazorpayPayment
   const razorpayOrderId = payment.order_id
@@ -192,14 +175,11 @@ async function handlePaymentFailed(payload: WebhookPayload) {
   }
 
   try {
-    // Update order status to cancelled
-    const baseUrl = getBaseApiUrl()
-    const updateResponse = await fetch(`${baseUrl}/api/orders/${payloadOrderId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    // Update order status using Payload's API
+    const updatedOrder = await payload.update({
+      collection: 'orders',
+      where: { orderNumber: { equals: orderNumber } },
+      data: {
         status: 'cancelled',
         razorpayDetails: {
           razorpay_id: razorpayOrderId,
@@ -208,22 +188,16 @@ async function handlePaymentFailed(payload: WebhookPayload) {
           error_description: payment.error_description,
           status: 'failed',
         },
-      }),
+      },
     })
 
-    if (updateResponse.ok) {
-      console.log(`Order ${orderNumber} marked as cancelled due to failed payment:`, payment.id)
-    } else {
-      const errorText = await updateResponse.text()
-      console.error('Failed to update order status:', errorText)
-      throw new Error('Failed to update order status')
-    }
+    console.log(`Order ${orderNumber} marked as cancelled due to failed payment:`, payment.id)
   } catch (error) {
     console.error('Error handling failed payment:', error)
   }
 }
 
-async function handlePaymentCaptured(payload: WebhookPayload) {
+async function handlePaymentCaptured(payload: any) {
   const payment = payload.payment.entity as RazorpayPayment
   const razorpayOrderId = payment.order_id
   console.log('payment captured', payment)
@@ -236,14 +210,11 @@ async function handlePaymentCaptured(payload: WebhookPayload) {
   }
 
   try {
-    // Update order status to paid
-    const baseUrl = getBaseApiUrl()
-    const updateResponse = await fetch(`${baseUrl}/api/orders/${payloadOrderId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    // Update order status using Payload's API
+    const updatedOrder = await payload.update({
+      collection: 'orders',
+      where: { orderNumber: { equals: orderNumber } },
+      data: {
         status: 'processing',
         isPaid: true,
         razorpayDetails: {
@@ -256,39 +227,34 @@ async function handlePaymentCaptured(payload: WebhookPayload) {
           fee: payment.fee,
           tax: payment.tax,
         },
-      }),
+      },
     })
 
-    if (updateResponse.ok) {
-      console.log(`Order ${orderNumber} marked as paid for payment:`, payment.id)
+    console.log('Updated order:', updatedOrder)
 
-      // Send order confirmation email only after successful payment
-      try {
-        const emailResponse = await fetch(`${baseUrl}/api/send-email`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            orderId: payloadOrderId,
-            orderNumber: orderNumber,
-            type: 'order_confirmation',
-          }),
-        })
+    // Send order confirmation email only after successful payment
+    try {
+      const baseUrl = getBaseApiUrl()
+      const emailResponse = await fetch(`${baseUrl}/api/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId: payloadOrderId,
+          orderNumber: orderNumber,
+          type: 'order_confirmation',
+        }),
+      })
 
-        if (emailResponse.ok) {
-          console.log(`Order confirmation email sent for order ${orderNumber}`)
-        } else {
-          console.error('Failed to send order confirmation email:', await emailResponse.text())
-        }
-      } catch (emailError) {
-        console.error('Error sending order confirmation email:', emailError)
-        // Don't throw here - we don't want to affect the order processing if email fails
+      if (emailResponse.ok) {
+        console.log(`Order confirmation email sent for order ${orderNumber}`)
+      } else {
+        console.error('Failed to send order confirmation email:', await emailResponse.text())
       }
-    } else {
-      const errorText = await updateResponse.text()
-      console.error('Failed to update order status:', errorText)
-      throw new Error('Failed to update order status')
+    } catch (emailError) {
+      console.error('Error sending order confirmation email:', emailError)
+      // Don't throw here - we don't want to affect the order processing if email fails
     }
   } catch (error) {
     console.error('Error handling captured payment:', error)

@@ -9,9 +9,9 @@ const Orders: CollectionConfig = {
     useAsTitle: 'orderNumber',
   },
   access: {
-    read: adminsAndLoggedIn,
+    read: () => true,
     create: () => true, // Allow guest users to create orders
-    update: admins,
+    update: () => true,
     delete: admins,
   },
   hooks: {
@@ -40,7 +40,7 @@ const Orders: CollectionConfig = {
             //     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             //       <h1 style="color: #92400e; margin-bottom: 20px;">Order Confirmation</h1>
             //       <p style="font-size: 16px; color: #444; margin-bottom: 20px;">Thank you for your order! Your order has been placed successfully.</p>
-                  
+
             //       <div style="background-color: #f8f8f8; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
             //         <h2 style="color: #444; margin-bottom: 15px;">Order Details</h2>
             //         <p style="margin: 10px 0;"><strong>Order Number:</strong> ${orderNumber}</p>
