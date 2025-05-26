@@ -155,6 +155,7 @@ async function handlePaymentAuthorized(payload: any) {
           method: payment.method,
           status: 'authorized',
         },
+        razorpayPaymentResponse: payment as unknown as { [x: string]: unknown }, // Store complete payment response
       },
     })
 
@@ -196,6 +197,7 @@ async function handlePaymentFailed(payload: any) {
           error_description: payment.error_description,
           status: 'failed',
         },
+        razorpayPaymentResponse: payment as unknown as { [x: string]: unknown }, // Store complete payment response
       },
     })
 
@@ -238,6 +240,7 @@ async function handlePaymentCaptured(payload: any) {
           fee: payment.fee,
           tax: payment.tax,
         },
+        razorpayPaymentResponse: payment as unknown as { [x: string]: unknown }, // Store complete payment response
       },
     })
 

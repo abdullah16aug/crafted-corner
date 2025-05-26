@@ -306,6 +306,18 @@ export interface Order {
    * Razorpay order ID for linking with payment gateway
    */
   razorpayOrderId?: string | null;
+  /**
+   * Complete Razorpay payment response JSON
+   */
+  razorpayPaymentResponse?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   amount?: number | null;
   shippingAddress: {
@@ -623,6 +635,7 @@ export interface OrdersSelect<T extends boolean = true> {
         error_description?: T;
       };
   razorpayOrderId?: T;
+  razorpayPaymentResponse?: T;
   status?: T;
   amount?: T;
   shippingAddress?:

@@ -21,6 +21,13 @@ const Orders: CollectionConfig = {
         if (operation === 'create') {
           console.log('Order changed:', doc)
 
+          // Only send email for COD orders
+          // Razorpay orders will get email confirmation after successful payment via webhook
+          if (doc.paymentMethod !== 'cod') {
+            console.log('Skipping email for non-COD order:', doc.orderNumber)
+            return
+          }
+
           // Properly extract email from either customer or guest info
           const email = doc.customer?.email || doc.guestInfo?.email
 
@@ -288,6 +295,15 @@ const Orders: CollectionConfig = {
       admin: {
         description: 'Razorpay order ID for linking with payment gateway',
         condition: (data) => data.paymentMethod === 'razorpay',
+      },
+    },
+    {
+      name: 'razorpayPaymentResponse',
+      type: 'json',
+      admin: {
+        description: 'Complete Razorpay payment response JSON',
+        condition: (data) => data.paymentMethod === 'razorpay',
+        readOnly: true,
       },
     },
     {
