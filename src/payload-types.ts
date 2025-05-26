@@ -295,8 +295,19 @@ export interface Order {
     currency?: string | null;
     receipt?: string | null;
     status?: string | null;
+    payment_id?: string | null;
+    method?: string | null;
+    fee?: number | null;
+    tax?: number | null;
+    error_code?: string | null;
+    error_description?: string | null;
   };
+  /**
+   * Razorpay order ID for linking with payment gateway
+   */
+  razorpayOrderId?: string | null;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  amount?: number | null;
   shippingAddress: {
     street: string;
     city: string;
@@ -604,8 +615,16 @@ export interface OrdersSelect<T extends boolean = true> {
         currency?: T;
         receipt?: T;
         status?: T;
+        payment_id?: T;
+        method?: T;
+        fee?: T;
+        tax?: T;
+        error_code?: T;
+        error_description?: T;
       };
+  razorpayOrderId?: T;
   status?: T;
+  amount?: T;
   shippingAddress?:
     | T
     | {
