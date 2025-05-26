@@ -136,10 +136,10 @@ async function handlePaymentAuthorized(payload: any) {
   try {
     console.log(`Updating order ${orderNumber} (ID: ${payloadOrderId}) for payment ${payment.id}`)
 
-    // Update the order using Payload's API
+    // Update the order using Payload's API with direct ID
     const updatedOrder = await payload.update({
       collection: 'orders',
-      where: { orderNumber: { equals: orderNumber } },
+      id: payloadOrderId,
       data: {
         status: 'processing',
         razorpayDetails: {
@@ -175,10 +175,10 @@ async function handlePaymentFailed(payload: any) {
   }
 
   try {
-    // Update order status using Payload's API
+    // Update order status using Payload's API with direct ID
     const updatedOrder = await payload.update({
       collection: 'orders',
-      where: { orderNumber: { equals: orderNumber } },
+      id: payloadOrderId,
       data: {
         status: 'cancelled',
         razorpayDetails: {
@@ -210,10 +210,10 @@ async function handlePaymentCaptured(payload: any) {
   }
 
   try {
-    // Update order status using Payload's API
+    // Update order status using Payload's API with direct ID
     const updatedOrder = await payload.update({
       collection: 'orders',
-      where: { orderNumber: { equals: orderNumber } },
+      id: payloadOrderId,
       data: {
         status: 'processing',
         isPaid: true,

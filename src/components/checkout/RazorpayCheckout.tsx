@@ -52,9 +52,31 @@ export default function RazorpayCheckout({
         country: 'India',
       }
 
-      console.log('Creating order in Payload first...')
+      console.log('Creating Razorpay order first...')
 
-      // 1. First create order in Payload with 'pending' status
+      // 1. First create Razorpay order
+      const razorpayResponse = await fetch('/api/razorpay', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: orderDetails.amount,
+          customerName: orderDetails.customerName,
+          email: orderDetails.email,
+          phone: orderDetails.phone,
+        }),
+      })
+
+      const razorpayData = await razorpayResponse.json()
+
+      if (!razorpayData.success) {
+        throw new Error(razorpayData.error || 'Failed to create Razorpay order')
+      }
+
+      console.log('Razorpay order created:', razorpayData.order.id)
+
+      // 2. Now create order in Payload with Razorpay order ID
       const orderResponse = await fetch('/api/orders', {
         method: 'POST',
         headers: {
@@ -77,6 +99,7 @@ export default function RazorpayCheckout({
             phone: orderDetails.phone,
           },
           shippingAddress: shippingAddress,
+          razorpayOrderId: razorpayData.order.id, // Store Razorpay order ID
         }),
       })
 
@@ -89,36 +112,31 @@ export default function RazorpayCheckout({
       const createdOrder = await orderResponse.json()
       console.log('Order created in Payload:', createdOrder)
 
-      // 2. Now create Razorpay order
-      const response = await fetch('/api/razorpay', {
+      // 3. Update Razorpay order with Payload order details
+      const updateRazorpayResponse = await fetch('/api/razorpay/update-notes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          amount: orderDetails.amount,
-          customerName: orderDetails.customerName,
-          email: orderDetails.email,
-          phone: orderDetails.phone,
+          razorpayOrderId: razorpayData.order.id,
+          payloadOrderId: createdOrder.doc.id,
           orderNumber: createdOrder.doc.orderNumber,
-          orderId: createdOrder.doc.id,
         }),
       })
 
-      const data = await response.json()
-
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to create Razorpay order')
+      if (!updateRazorpayResponse.ok) {
+        console.warn('Failed to update Razorpay order notes, but continuing with payment')
       }
 
-      // 3. Configure Razorpay options
+      // 4. Configure Razorpay options
       const options = {
-        key: data.key_id,
-        amount: data.order.amount,
-        currency: data.order.currency,
+        key: razorpayData.key_id,
+        amount: razorpayData.order.amount,
+        currency: razorpayData.order.currency,
         name: 'Crafted Corners',
         description: 'Purchase from Crafted Corners',
-        order_id: data.order.id,
+        order_id: razorpayData.order.id,
         prefill: {
           name: orderDetails.customerName,
           email: orderDetails.email,
@@ -146,10 +164,10 @@ export default function RazorpayCheckout({
         },
       }
 
-      // 4. Initialize Razorpay
+      // 5. Initialize Razorpay
       const razorpay = new window.Razorpay(options)
 
-      // 5. Handle payment failure directly in the client
+      // 6. Handle payment failure directly in the client
       razorpay.on('payment.failed', function (response: any) {
         const error = response.error
         console.error('Payment failed:', error)
@@ -163,7 +181,7 @@ export default function RazorpayCheckout({
           body: JSON.stringify({
             status: 'cancelled',
             razorpayDetails: {
-              razorpay_id: data.order.id,
+              razorpay_id: razorpayData.order.id,
               payment_id: error.metadata?.payment_id,
               error_code: error.code,
               error_description: error.description,
@@ -186,7 +204,7 @@ export default function RazorpayCheckout({
         onError(new Error(errorMessage))
       })
 
-      // 6. Open Razorpay payment form
+      // 7. Open Razorpay payment form
       razorpay.open()
     } catch (error: unknown) {
       console.error('Razorpay payment error:', error)

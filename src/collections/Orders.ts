@@ -253,8 +253,40 @@ const Orders: CollectionConfig = {
           name: 'status',
           type: 'text',
         },
+        {
+          name: 'payment_id',
+          type: 'text',
+        },
+        {
+          name: 'method',
+          type: 'text',
+        },
+        {
+          name: 'fee',
+          type: 'number',
+        },
+        {
+          name: 'tax',
+          type: 'number',
+        },
+        {
+          name: 'error_code',
+          type: 'text',
+        },
+        {
+          name: 'error_description',
+          type: 'text',
+        },
       ],
       admin: {
+        condition: (data) => data.paymentMethod === 'razorpay',
+      },
+    },
+    {
+      name: 'razorpayOrderId',
+      type: 'text',
+      admin: {
+        description: 'Razorpay order ID for linking with payment gateway',
         condition: (data) => data.paymentMethod === 'razorpay',
       },
     },
