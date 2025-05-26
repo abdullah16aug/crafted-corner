@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
+import { getPayload } from 'payload'
+import config from '@payload-config'
 
 // Replace with your Razorpay webhook secret
 const webhookSecret = process.env.rzp_secret
@@ -136,8 +138,11 @@ async function handlePaymentAuthorized(payload: any) {
   try {
     console.log(`Updating order ${orderNumber} (ID: ${payloadOrderId}) for payment ${payment.id}`)
 
+    // Get Payload instance
+    const payloadInstance = await getPayload({ config })
+
     // Update the order using Payload's API with direct ID
-    const updatedOrder = await payload.update({
+    const updatedOrder = await payloadInstance.update({
       collection: 'orders',
       id: payloadOrderId,
       data: {
@@ -175,8 +180,11 @@ async function handlePaymentFailed(payload: any) {
   }
 
   try {
+    // Get Payload instance
+    const payloadInstance = await getPayload({ config })
+
     // Update order status using Payload's API with direct ID
-    const updatedOrder = await payload.update({
+    const updatedOrder = await payloadInstance.update({
       collection: 'orders',
       id: payloadOrderId,
       data: {
@@ -210,8 +218,11 @@ async function handlePaymentCaptured(payload: any) {
   }
 
   try {
+    // Get Payload instance
+    const payloadInstance = await getPayload({ config })
+
     // Update order status using Payload's API with direct ID
-    const updatedOrder = await payload.update({
+    const updatedOrder = await payloadInstance.update({
       collection: 'orders',
       id: payloadOrderId,
       data: {
